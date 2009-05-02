@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1178,6 +1179,17 @@ public class MediaPlaybackService extends Service {
                     if (mRepeatMode == REPEAT_ALL || force) {
                         //pick from full set
                         numUnplayed = numTracks;
+                        // The following check is to prevent the scenario
+                        // where songs are deleted after creating the song
+                        // play list and in the repeat all mode it still
+                        // assumes that there will be some songs present in
+                        // the play list. if no. of unplayed songs become -ve then
+                        // all songs are already played. Go to the idle State
+                        if (numUnplayed <= 0) {
+                            Log.e("@@@@ Service","Songs Play list is empty so going to the idle State");
+                            gotoIdleState();
+                            return;
+                        }
                         for (int i=0;i < numTracks; i++) {
                             tracks[i] = i;
                         }
