@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1065,6 +1066,13 @@ public class TrackBrowserActivity extends ListActivity
             }
             
             int size = mCurrentPlaylistCursor.getCount();
+            if (size == 0) {
+                Log.w (LOGTAG, "makeNowPlayingCursor query did not succeed because current playlist size is 0");
+                mCurrentPlaylistCursor = null;
+                mSize = 0;
+                return;
+            }
+
             mCursorIdxs = new int[size];
             mCurrentPlaylistCursor.moveToFirst();
             int colidx = mCurrentPlaylistCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
