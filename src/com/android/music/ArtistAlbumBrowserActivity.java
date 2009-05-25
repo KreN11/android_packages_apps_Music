@@ -791,7 +791,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
 
         @Override
         public void changeCursor(Cursor cursor) {
-             if ( cursor.isClosed () ) {
+             if (cursor == null || cursor.isClosed()) {
                 return;
              }
 
