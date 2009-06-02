@@ -518,7 +518,8 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         private AsyncQueryHandler mQueryHandler;
         private String mConstraint = null;
         private boolean mConstraintIsValid = false;
-        
+        private boolean mCursorInactive; // keep track of mCursor. Can be deactivated my mAdapter
+
         static class ViewHolder {
             TextView line1;
             TextView line2;
@@ -543,6 +544,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
                 int clayout, String[] cfrom, int[] cto) {
             super(context, cursor, glayout, gfrom, gto, clayout, cfrom, cto);
             mActivity = currentactivity;
+            mCursorInactive = false;
             mQueryHandler = new QueryHandler(context.getContentResolver());
 
             Resources r = context.getResources();
@@ -765,16 +767,44 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
                 public int getColumnCount() {
                     return super.getColumnCount() + 1;
                 }
+
+
+                @Override
+                public void deactivate() {
+                     synchronized (mActivity) {
+                         mCursorInactive = true;
+                         super.deactivate();
+                     }
+                 }
+
+                 @Override
+                 public boolean requery() {
+                     synchronized (mActivity) {
+                         mCursorInactive = !(super.requery()); // not ~ super()
+                         return (mCursorInactive == false);
+                     }
+                 }
+
             }
             return new MyCursorWrapper(c, groupCursor.getString(mGroupArtistIdx));
         }
 
         @Override
         public void changeCursor(Cursor cursor) {
-            if (cursor != mActivity.mArtistCursor) {
-                mActivity.mArtistCursor = cursor;
-                getColumnIndices(cursor);
-                super.changeCursor(cursor);
+             if ( cursor.isClosed () ) {
+                return;
+             }
+
+             synchronized (mActivity) {
+                if ( mCursorInactive ) {
+                    return;
+                }
+
+                if (cursor != mActivity.mArtistCursor) {
+                    mActivity.mArtistCursor = cursor;
+                    getColumnIndices(cursor);
+                    super.changeCursor(cursor);
+                }
             }
         }
         
