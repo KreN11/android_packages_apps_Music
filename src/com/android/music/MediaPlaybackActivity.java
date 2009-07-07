@@ -19,7 +19,6 @@ package com.android.music;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.SearchManager;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -41,7 +40,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.provider.MediaStore;
 import android.text.Layout;
 import android.text.TextUtils.TruncateAt;
@@ -62,22 +60,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
-/** Bluetooth Send related */
-import com.android.music.bluetooth.BluetoothObexTransfer;
-import com.android.music.bluetooth.BluetoothDevicePicker;
 
 public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     View.OnTouchListener, View.OnLongClickListener
 {
-    private static final String TAG = "MediaPlaybackActivity";
     private static final int USE_AS_RINGTONE = CHILD_MENU_BASE;
-
-    /* For Sending Music file over Bluetooth */
-    private BluetoothObexTransfer mBluetoothObexTransfer = null;
-    private static final int SUBACTIVITY_PICK_BT_DEVICE = 1;
-    public static final int MENU_ITEM_SEND_BT = 1;
-    public static final int MENU_GROUP_BT = 1;
-
+    
     private boolean mOneShot = false;
     private boolean mSeeking = false;
     private boolean mDeviceHasNoDpad;
@@ -120,7 +108,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mAlbumName = (TextView) findViewById(R.id.albumname);
         mTrackName = (TextView) findViewById(R.id.trackname);
 
-        View v = (View)mArtistName.getParent();
+        View v = (View)mArtistName.getParent(); 
         v.setOnTouchListener(this);
         v.setOnLongClickListener(this);
 
@@ -131,7 +119,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         v = (View)mTrackName.getParent();
         v.setOnTouchListener(this);
         v.setOnLongClickListener(this);
-
+        
         mPrevButton = (RepeatingImageButton) findViewById(R.id.prev);
         mPrevButton.setOnClickListener(mPrevListener);
         mPrevButton.setRepeatListener(mRewListener, 260);
@@ -143,41 +131,37 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         mNextButton.setRepeatListener(mFfwdListener, 260);
         seekmethod = 1;
 
-        mDeviceHasNoDpad = (getResources().getConfiguration().navigation !=
+        mDeviceHasNoDpad = (getResources().getConfiguration().navigation != 
             Configuration.NAVIGATION_DPAD);
-
+        
         mQueueButton = (ImageButton) findViewById(R.id.curplaylist);
         mQueueButton.setOnClickListener(mQueueListener);
         mShuffleButton = ((ImageButton) findViewById(R.id.shuffle));
         mShuffleButton.setOnClickListener(mShuffleListener);
         mRepeatButton = ((ImageButton) findViewById(R.id.repeat));
         mRepeatButton.setOnClickListener(mRepeatListener);
-
+        
         if (mProgress instanceof SeekBar) {
             SeekBar seeker = (SeekBar) mProgress;
             seeker.setOnSeekBarChangeListener(mSeekListener);
         }
         mProgress.setMax(1000);
-
+        
         if (icicle != null) {
             mOneShot = icicle.getBoolean("oneshot");
         } else {
             mOneShot = getIntent().getBooleanExtra("oneshot", false);
         }
-        /* For Sending Music file over Bluetooth */
-        if (SystemProperties.getBoolean("ro.qualcomm.proprietary_obex", false)) {
-            mBluetoothObexTransfer = new BluetoothObexTransfer(MediaPlaybackActivity.this);
-        }
 
         mTouchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
     }
-
+    
     int mInitialX = -1;
     int mLastX = -1;
     int mTextWidth = 0;
     int mViewWidth = 0;
     boolean mDraggingLabel = false;
-
+    
     TextView textViewForContainer(View v) {
         View vv = v.findViewById(R.id.artistname);
         if (vv != null) return (TextView) vv;
@@ -187,7 +171,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         if (vv != null) return (TextView) vv;
         return null;
     }
-
+    
     public boolean onTouch(View v, MotionEvent event) {
         int action = event.getAction();
         TextView tv = textViewForContainer(v);
@@ -231,7 +215,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             if (Math.abs(delta) > mTouchSlop) {
                 // start moving
                 mLabelScroller.removeMessages(0, tv);
-
+                
                 // Only turn ellipsizing off when it's not already off, because it
                 // causes the scroll position to be reset to 0.
                 if (tv.getEllipsize() != null) {
@@ -258,7 +242,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 return true;
             }
         }
-        return false;
+        return false; 
     }
 
     Handler mLabelScroller = new Handler() {
@@ -276,7 +260,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             }
         }
     };
-
+    
     public boolean onLongClick(View view) {
 
         CharSequence title = null;
@@ -285,7 +269,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         String artist;
         String album;
         String song;
-
+        
         try {
             artist = mService.getArtistName();
             album = mService.getAlbumName();
@@ -293,13 +277,13 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
             return true;
         }
-
+        
         boolean knownartist =
             (artist != null) && !MediaFile.UNKNOWN_STRING.equals(artist);
 
         boolean knownalbum =
             (album != null) && !MediaFile.UNKNOWN_STRING.equals(album);
-
+        
         if (knownartist && view.equals(mArtistName.getParent())) {
             title = artist;
             query = artist;
@@ -376,7 +360,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             mFromTouch = false;
         }
     };
-
+    
     private View.OnClickListener mQueueListener = new View.OnClickListener() {
         public void onClick(View v) {
             startActivity(
@@ -386,7 +370,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             );
         }
     };
-
+    
     private View.OnClickListener mShuffleListener = new View.OnClickListener() {
         public void onClick(View v) {
             toggleShuffle();
@@ -436,14 +420,14 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             scanBackward(repcnt, howlong);
         }
     };
-
+    
     private RepeatingImageButton.RepeatListener mFfwdListener =
         new RepeatingImageButton.RepeatListener() {
         public void onRepeat(View v, long howlong, int repcnt) {
             scanForward(repcnt, howlong);
         }
     };
-
+   
     @Override
     public void onStop() {
         paused = true;
@@ -464,7 +448,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         outState.putBoolean("oneshot", mOneShot);
         super.onSaveInstanceState(outState);
     }
-
+    
     @Override
     public void onStart() {
         super.onStart();
@@ -474,7 +458,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             // something went wrong
             mHandler.sendEmptyMessage(QUIT);
         }
-
+        
         IntentFilter f = new IntentFilter();
         f.addAction(MediaPlaybackService.PLAYSTATE_CHANGED);
         f.addAction(MediaPlaybackService.META_CHANGED);
@@ -484,29 +468,26 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         long next = refreshNow();
         queueNextRefresh(next);
     }
-
+    
     @Override
     public void onNewIntent(Intent intent) {
         setIntent(intent);
         mOneShot = intent.getBooleanExtra("oneshot", false);
     }
-
+    
     @Override
     public void onResume() {
         super.onResume();
         updateTrackInfo();
         setPauseButtonImage();
     }
-
+    
     @Override
     public void onDestroy()
     {
         mAlbumArtWorker.quit();
         super.onDestroy();
         //System.out.println("***************** playback activity onDestroy\n");
-        if(mBluetoothObexTransfer != null) {
-            mBluetoothObexTransfer.onDestroy();
-        }
     }
 
     @Override
@@ -524,18 +505,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             MusicUtils.makePlaylistMenu(this, sub);
             menu.add(0, USE_AS_RINGTONE, 0, R.string.ringtone_menu_short).setIcon(R.drawable.ic_menu_set_as_ringtone);
             menu.add(0, DELETE_ITEM, 0, R.string.delete_item).setIcon(R.drawable.ic_menu_delete);
-
-            // Add sub menu for Bluetooth options
-            sub = menu.addSubMenu(MENU_GROUP_BT, 0 , 0,
-                    R.string.menu_share).setIcon(android.R.drawable.ic_menu_share);
-            sub.add(MENU_GROUP_BT,MENU_ITEM_SEND_BT,0, R.string.menu_send_bt);
-
-            boolean bluetoothEnabled = false;
-            if (mBluetoothObexTransfer != null) {
-               bluetoothEnabled = mBluetoothObexTransfer.isEnabled();
-            }
-            menu.setGroupEnabled(MENU_GROUP_BT, bluetoothEnabled);
-            menu.setGroupVisible(MENU_GROUP_BT, bluetoothEnabled);
+            return true;
         }
         return false;
     }
@@ -553,13 +523,6 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 item.setTitle(R.string.party_shuffle);
             }
         }
-        boolean bluetoothEnabled = false;
-        if (mBluetoothObexTransfer != null) {
-           bluetoothEnabled = mBluetoothObexTransfer.isEnabled();
-        }
-        menu.setGroupEnabled(MENU_GROUP_BT, bluetoothEnabled);
-        menu.setGroupVisible(MENU_GROUP_BT, bluetoothEnabled);
-
         return true;
     }
 
@@ -593,7 +556,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     }
                     setShuffleButtonImage();
                     break;
-
+                    
                 case NEW_PLAYLIST: {
                     intent = new Intent();
                     intent.setClass(this, CreatePlaylist.class);
@@ -608,7 +571,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     MusicUtils.addToPlaylist(this, list, playlist);
                     return true;
                 }
-
+                
                 case DELETE_ITEM: {
                     if (mService != null) {
                         int [] list = new int[1];
@@ -624,52 +587,26 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     }
                     return true;
                 }
-                case MENU_ITEM_SEND_BT: {
-                    if (mBluetoothObexTransfer != null) {
-                       if (mBluetoothObexTransfer.isEnabled()) {
-                          intent = new Intent(this, BluetoothDevicePicker.class);
-                          intent.setAction(BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE);
-                          intent.setData(Uri.parse(mService.getPath()));
-                          try {
-                             startActivityForResult(intent, SUBACTIVITY_PICK_BT_DEVICE);
-                          } catch (ActivityNotFoundException e) {
-                             Log.e(TAG, "No Activity for : " + BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE, e);
-                          }
-                       }
-                    }
-                    return true;
-                } // MENU_ITEM_SEND_BT
             }
         } catch (RemoteException ex) {
         }
         return super.onOptionsItemSelected(item);
     }
-
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (resultCode != RESULT_OK) {
             return;
         }
-        Uri uri = intent.getData();
         switch (requestCode) {
             case NEW_PLAYLIST:
+                Uri uri = intent.getData();
                 if (uri != null) {
                     int [] list = new int[1];
                     list[0] = MusicUtils.getCurrentAudioId();
                     int playlist = Integer.parseInt(uri.getLastPathSegment());
                     MusicUtils.addToPlaylist(this, list, playlist);
                 }
-                break;
-            case SUBACTIVITY_PICK_BT_DEVICE:
-                if (resultCode == RESULT_OK && intent != null) {
-                   /* Initiate the transfer */
-                   if( mBluetoothObexTransfer != null) {
-                      // Obtain the Uri with Server name and Address
-                      String devAddress = intent.getStringExtra(BluetoothDevicePicker.ADDRESS);
-                      String devName = intent.getStringExtra(BluetoothDevicePicker.NAME);
-                      mBluetoothObexTransfer.sendMedia(uri, devAddress, this);
-                   }
-                }//if(result Ok)
                 break;
         }
     }
@@ -730,11 +667,11 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     else if (y == 2 && lastY == 2 && x > lastX) dir = -1;
                     else if (y == 2 && lastY == 2 && x < lastX) dir = 1;
                     // moving up
-                    else if (y < lastY && x <= 4) dir = 1;
-                    else if (y < lastY && x >= 5) dir = -1;
+                    else if (y < lastY && x <= 4) dir = 1; 
+                    else if (y < lastY && x >= 5) dir = -1; 
                     // moving down
-                    else if (y > lastY && x <= 4) dir = -1;
-                    else if (y > lastY && x >= 5) dir = 1;
+                    else if (y > lastY && x <= 4) dir = -1; 
+                    else if (y > lastY && x >= 5) dir = 1; 
                     lastX = x;
                     lastY = y;
                     try {
@@ -882,7 +819,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
         return super.onKeyDown(keyCode, event);
     }
-
+    
     private void scanBackward(int repcnt, long delta) {
         if(mService == null) return;
         try {
@@ -894,7 +831,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 mSeeking = true;
                 if (delta < 5000) {
                     // seek at 10x speed for the first 5 seconds
-                    delta = delta * 10;
+                    delta = delta * 10; 
                 } else {
                     // seek at 40x after that
                     delta = 50000 + (delta - 5000) * 40;
@@ -933,7 +870,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 mSeeking = true;
                 if (delta < 5000) {
                     // seek at 10x speed for the first 5 seconds
-                    delta = delta * 10;
+                    delta = delta * 10; 
                 } else {
                     // seek at 40x after that
                     delta = 50000 + (delta - 5000) * 40;
@@ -963,7 +900,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-
+    
     private void doPauseResume() {
         try {
             if(mService != null) {
@@ -978,7 +915,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-
+    
     private void toggleShuffle() {
         if (mService == null) {
             return;
@@ -1003,7 +940,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-
+    
     private void cycleRepeat() {
         if (mService == null) {
             return;
@@ -1027,9 +964,9 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             setRepeatButtonImage();
         } catch (RemoteException ex) {
         }
-
+        
     }
-
+    
     private void showToast(int resid) {
         if (mToast == null) {
             mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
@@ -1133,7 +1070,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-
+    
     private void setShuffleButtonImage() {
         try {
             switch (mService.getShuffleMode()) {
@@ -1150,7 +1087,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-
+    
     private void setPauseButtonImage() {
         try {
             if (mService != null && mService.isPlaying()) {
@@ -1161,7 +1098,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         } catch (RemoteException ex) {
         }
     }
-
+    
     private ImageView mAlbum;
     private TextView mCurrentTime;
     private TextView mTotalTime;
@@ -1196,7 +1133,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             long remaining = 1000 - (pos % 1000);
             if ((pos >= 0) && (mDuration > 0)) {
                 mCurrentTime.setText(MusicUtils.makeTimeString(this, pos / 1000));
-
+                
                 if (mService.isPlaying()) {
                     mCurrentTime.setVisibility(View.VISIBLE);
                 } else {
@@ -1218,7 +1155,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         }
         return 500;
     }
-
+    
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -1232,7 +1169,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                     long next = refreshNow();
                     queueNextRefresh(next);
                     break;
-
+                    
                 case QUIT:
                     // This can be moved back to onCreate once the bug that prevents
                     // Dialogs from being started from onCreate/onResume is fixed.
@@ -1287,7 +1224,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 finish();
                 return;
             }
-
+            
             if (mService.getAudioId() < 0 && path.toLowerCase().startsWith("http://")) {
                 ((View) mArtistName.getParent()).setVisibility(View.INVISIBLE);
                 ((View) mAlbumName.getParent()).setVisibility(View.INVISIBLE);
@@ -1321,10 +1258,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             finish();
         }
     }
-
+    
     public class AlbumArtHandler extends Handler {
         private int mAlbumId = -1;
-
+        
         public AlbumArtHandler(Looper looper) {
             super(looper);
         }
@@ -1350,11 +1287,11 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             }
         }
     }
-
+    
     private static class Worker implements Runnable {
         private final Object mLock = new Object();
         private Looper mLooper;
-
+        
         /**
          * Creates a worker thread with the given name. The thread
          * then runs a {@link android.os.Looper}.
@@ -1373,11 +1310,11 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 }
             }
         }
-
+        
         public Looper getLooper() {
             return mLooper;
         }
-
+        
         public void run() {
             synchronized (mLock) {
                 Looper.prepare();
@@ -1386,7 +1323,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             }
             Looper.loop();
         }
-
+        
         public void quit() {
             mLooper.quit();
         }

@@ -3,236 +3,21 @@
 /*
 ** Copyright 2007, The Android Open Source Project
 **
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
 **
-**     http://www.apache.org/licenses/LICENSE-2.0
+**     http://www.apache.org/licenses/LICENSE-2.0 
 **
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
 ** limitations under the License.
 */
 -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
-    <!-- Bluetooth related strings  -->
-    <string name="transfer_progress"><xliff:g id="progress_text">%s</xliff:g></string>
-    <string name="transfer_complete">Transfer Completed</string>
-    <string name="cancel_tx_rx_transfer">Bluetooth Send and Receive Cancelled</string>
-    <string name="cancel_tx_transfer">Bluetooth Send Cancelled</string>
-    <string name="cancel_rx_transfer">Bluetooth Receive Cancelled</string>
-    <string name="sending_progress_one">Sending Music <xliff:g id="send_progress_one_text">%s</xliff:g></string>
-    <string name="sending_progress_more">Sending <xliff:g id="send_progress_more_text">%s</xliff:g> Music files </string>
-    <string name="get_progress_one">Receiving Contact </string>
-    <string name="get_progress_more">Receiving <xliff:g id="rx_progress_more_text">%s</xliff:g> contacts </string>
-    <string name="receive_contact_done">Received Contact :  <xliff:g id="receive_sontact_text">%s</xliff:g></string>
-    <string name="cancel_transfer">Cancel</string>
-    <string name="menu_share">Share</string>
-
-    <string name="menu_send_bt">Send using Bluetooth</string>
-    <string name="bluetooth_device_picker_title">Select a Device</string>
-
-    <string name="bluetooth_activity_title">Bluetooth Search</string>
-    <!-- Used as setting title (for checkbox) on second screen after selecting Bluetooth settings -->
-    <string name="bluetooth">Bluetooth</string>
-    <!-- Summary text while Bluetooth is stopping -->
-    <string name="bluetooth_stopping">Bluetooth stopping\u2026</string>
-    <!-- Summary used for the Bluetooth on/off checkbox when bluetooth is currently disabled. -->
-    <string name="bluetooth_disabled">Turn on Bluetooth</string>
-    <!-- Summary used for the Bluetooth on/off checkbox when bluetooth is currently enabled. -->
-    <string name="bluetooth_enabled"></string>
-    <!-- Summary text while Bluetooth is turning on -->
-    <string name="bluetooth_enabling">Turning on Bluetooth\u2026</string>
-    <!-- Bluetooth settings screen, check box label when the Bluetooth device can be seen by others -->
-    <string name="bluetooth_visibility">Discoverable</string>
-    <!-- Bluetooth settings screen,  summary after selecting Discoverable check box -->
-    <string name="bluetooth_is_discoverable">Discoverable for <xliff:g id="discoverable_time_period">%1$s</xliff:g> seconds\u2026</string>
-    <!-- Bluetooth settings screen, Discoverable checkbox summary text -->
-    <string name="bluetooth_not_discoverable">Make device discoverable</string>
-    <!-- Bluetooth settings screen, title for the current bluetooth name setting -->
-    <string name="bluetooth_device_name">Device name</string>
-    <!-- Bluetooth settings screen, summary text when there isn't a name set (for the name setting) -->
-    <string name="bluetooth_name_not_set">No name set, using account name</string>
-    <!-- Bluetooth settings screen, menu item to scan for nearby bluetooth devices -->
-    <string name="bluetooth_scan_for_devices">Scan for devices</string>
-    <!-- Bluetooth settings screen, menu item to clear the nearby bluetooth device list -->
-    <string name="bluetooth_clear_list">Clear device list</string>
-    <!-- Bluetooth settings.  Message for disconnecting from a bluetooth device -->
-    <string name="bluetooth_disconnect_blank"><xliff:g id="device_name">%1$s</xliff:g> will be disconnected.</string>
-    <!-- Bluetooth settings.  Message when cnonected to a device -->
-    <string name="bluetooth_connected">Connected</string>
-    <!-- Bluetooth settings.  Message when a device is disconnected -->
-    <string name="bluetooth_disconnected">Disconnected</string>
-    <!-- Bluetooth settings.  Message when disconnecting from a device -->
-    <string name="bluetooth_disconnecting">Disconnecting\u2026</string>
-    <!-- Bluetooth settings.  Message when connecting to a device -->
-    <string name="bluetooth_connecting">Connecting\u2026</string>
-    <!-- Bluetooth settings.  Message when the device state is unknown -->
-    <string name="bluetooth_unknown"></string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when not paired yet -->
-    <string name="bluetooth_not_connected">Pair with this device</string>
-    <!--Bluetooth settings screen, summary text when unable to turn on Bluetooth -->
-    <string name="bluetooth_failed_to_enable">Unable to turn on Bluetooth</string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when pairing -->
-    <string name="bluetooth_pairing">Pairing\u2026</string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when failure to pair with one -->
-    <string name="failed_to_pair">Unable to pair with <xliff:g id="device_name">%1$s</xliff:g>.</string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when failure to connect with one-->
-    <string name="failed_to_connect">Unable to connect to <xliff:g id="device_name">%1$s</xliff:g>.</string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when paired with one -->
-    <string name="bluetooth_paired">Paired</string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices when paired with one and the device is not nearby -->
-    <string name="bluetooth_paired_not_nearby">Paired</string>
-    <!--Bluetooth settings screen, summary text under individual Bluetooth devices that are hands free or a headset -->
-    <string name="bluetooth_device">handsfree/headset</string>
-    <!-- Context menu items for bluetooth device entries -->
-    <string name="bluetooth_disconnect">Disconnect</string>
-    <!-- Context menu items for bluetooth device entries -->
-    <string name="bluetooth_connect">Connect</string>
-    <!-- Context menu items for bluetooth device entries -->
-    <string name="bluetooth_unpair">Unpair</string>
-    <!-- Context menu items for bluetooth device entries -->
-    <string name="bluetooth_pair">Pair</string>
-    <!--Bluetooth settings screen, text that appears in heading bar when scanning for devices -->
-    <string name="progress_scanning">Scanning</string>
-    <!-- Notification ticker text (shown in the status bar) when a Bluetooth device wants to pair with us -->
-    <string name="bluetooth_notif_ticker">Bluetooth pairing request</string>
-    <!-- Notification title when a Bluetooth device wants to pair with us -->
-    <string name="bluetooth_notif_title">Pairing request</string>
-    <!-- Notification message when a Bluetooth device wants to pair with us -->
-    <string name="bluetooth_notif_message">Select to pair with\u0020</string>
-
-
-    <!-- Do not translate. Used for diagnostic screens, precise translation is not necessary -->
-    <string name="bluetooth_scan_text">Empty button\u2026</string>
-    <!-- Do not translate. Used for diagnostic screens, precise translation is not necessary -->
-    <string name="bluetooth_settings_text">Empty button\u2026</string>
-    <!-- Do not translate. Used for diagnostic screens, precise translation is not necessary -->
-    <string name="bluetooth_enable_text">Empty button\u2026</string>
-
-    <!-- Do not translate. Used for diagnostic screens, precise translation is not necessary -->
-    <string name="bluetooth_device_info_connectButton_text">Turn on Bluetooth</string>
-    <!-- Do not translate. Used for diagnostic screens, precise translation is not necessary -->
-    <string name="bluetooth_device_info_deviceInfo_text"></string>
-
-    <!-- Do not translate. Used for diagnostic screens, precise translation is not necessary -->
-    <string name="bluetooth_sdp_query_services_text"></string>
-
-
-
-    <!-- Bluetooth settings -->
-    <!-- Bluetooth settings check box title on Main Settings screen -->
-    <string name="bluetooth_quick_toggle_title">Bluetooth</string>
-    <!-- Bluetooth settings check box summary for turning on bluetooth -->
-    <string name="bluetooth_quick_toggle_summary">Turn on Bluetooth</string>
-    <!--Used as title on second screen after selecting Bluetooth settings -->
-    <string name="bluetooth_settings">Bluetooth settings</string>
-    <!--Wireless controls screen, settings title for the item to take you to the bluetooth settings screen -->
-    <string name="bluetooth_settings_title">Bluetooth settings</string>
-    <!--Wireless controls screen, settings summary for the item tot ake you to the bluetooth settings screen -->
-    <string name="bluetooth_settings_summary">Manage connections, set device name &amp; discoverability</string>
-
-    <!-- Title for the dialog to enter PIN.  -->
-    <string name="bluetooth_pin_entry">Bluetooth pairing request</string>
-    <!-- Title for the bluetooth device info screen. -->
-    <string name="bluetooth_device_info">Bluetooth device info</string>
-    <!-- Message when the bluetooth is pairing with anotehr device -->
-    <string name="bluetooth_pairing_msg">Pairing\u2026</string>
-    <!-- Message when bluetooth dialog for pin entry is shwoing -->
-    <string name="bluetooth_enter_pin_msg"><xliff:g id="device_name">%1$s</xliff:g>\n\nType PIN to pair.\n(Try 0000 or 1234.)</string>
-
-    <!-- Title for BT error dialogs. -->
-    <string name="bluetooth_error_title">Attention</string>
-    <!-- Message for the error dialog when BT pairing fails generically. -->
-    <string name="bluetooth_pairing_error_message">There was a problem pairing with <xliff:g id="device_name">%1$s</xliff:g>.</string>
-    <!-- Alternative message for the error dialog when BT pairing fails generically. This message suggests the user to try another PIN. -->
-    <string name="bluetooth_pairing_alternate_error_message">There was a problem pairing with <xliff:g id="device_name">%1$s</xliff:g>. Please try another PIN.</string>
-    <!-- Message for the error dialog when BT pairing fails because the PIN entered is incorrect. -->
-    <string name="bluetooth_pairing_pin_error_message">There was a problem pairing with <xliff:g id="device_name">%1$s</xliff:g> because the typed PIN is incorrect.</string>
-
-    <!-- Message for the error dialog when BT connecting operation fails generically. -->
-    <string name="bluetooth_connecting_error_message">There was a problem connecting to <xliff:g id="device_name">%1$s</xliff:g>.</string>
-
-    <!-- Bluetooth title for entering new data -->
-    <string name="bluetooth_new_data">Type new data</string>
-    <!-- Bluetooth button for confirming new data-->
-    <string name="bluetooth_new_data_confirm">OK</string>
-    <!-- Bluetooth button for canceling new data-->
-    <string name="bluetooth_new_data_cancel">Cancel</string>
-
-    <!-- Bluetooth message when scanning for new devices -->
-    <string name="bluetooth_scan_for_new_devices">Scanning for new devices\u2026</string>
-    <!-- Do not translate -->
-    <string name="bluetooth_device_info_alias">Device alias</string>
-    <!-- Do not translate -->
-    <string name="bluetooth_device_info_no_alias">Type alias here\u2026</string>
-    <!-- Do not translate -->
-    <string name="bluetooth_device_info_delete">Remove this device</string>
-    <!-- Do not translate -->
-    <string name="bluetooth_device_info_sdp">List supported services</string>
-
-    <!-- Caption for bluetooth discoverability setting dialog. -->
-    <string name="bluetooth_discoverability_panel_title">Make me\u2026</string>
-    <!-- Summary for discoverable setting when device is discoverable for some amount of time -->
-    <string name="bluetooth_discoverable">Discoverable for <xliff:g id="discoverable_time_period">%1$s</xliff:g> seconds</string>
-    <!-- Summary for discoverable setting when device is connectable -->
-    <string name="bluetooth_connectable">Connectable only</string>
-    <!-- Summary for discoverable setting when device is not discoverable or conenctable -->
-    <string name="bluetooth_neither">Neither discoverable nor connectable</string>
-    <!-- Bluetooth settings: The title of the preference (list item) that initiates a scan for devices -->
-    <string name="bluetooth_preference_scan_title">Scan for devices</string>
-    <!-- Bluetooth settings: The summary of the preference (list item) that initiates a scan for devices -->
-    <string name="bluetooth_preference_scan_summary">Find devices to pair with</string>
-
-    <!-- Bluetooth settings.  Context menu item for a device.  Action will connect to all profiles on the device. -->
-    <string name="bluetooth_device_context_connect">Connect</string>
-    <!-- Bluetooth settings.  Context menu item for a device.  Action will disconnect from all profiles on the device. -->
-    <string name="bluetooth_device_context_disconnect">Disconnect</string>
-    <!-- Bluetooth settings.  Context menu item for a device.  Action will first pair, and then connect to all profiles on the device. -->
-    <string name="bluetooth_device_context_pair_connect">Pair &amp; connect</string>
-    <!-- Bluetooth settings.  Context menu item for a device.  Action will remove pairing with the device. -->
-    <string name="bluetooth_device_context_unpair">Unpair</string>
-    <!-- Bluetooth settings.  Context menu item for a device.  Action will disconnect and remove pairing with the device. -->
-    <string name="bluetooth_device_context_disconnect_unpair">Disconnect &amp; unpair</string>
-    <!-- Bluetooth settings.  Context menu item for a device.  Action will take the user to another screen where they can choose exactly which profiles to connect to. -->
-    <string name="bluetooth_device_context_connect_advanced">Options\u2026</string>
-
-    <!-- Bluetooth settings.  The title of the screen to pick which profiles to connect to on the device.  For example, headphones may have both A2DP and headset, this allows the user to choose which one he wants to connect to. -->
-    <string name="bluetooth_connect_specific_profiles_title">Connect to\u2026</string>
-
-    <!-- Bluetooth settings.  The user-visible string that is used whenever referring to the A2DP profile. -->
-    <string name="bluetooth_profile_a2dp">Media</string>
-    <!-- Bluetooth settings.  The user-visible string that is used whenever referring to the headset or handsfree profile. -->
-    <string name="bluetooth_profile_headset">Phone</string>
-
-    <!-- Bluetooth settings.  The summary string when a device is connected to the A2DP profile. -->
-    <string name="bluetooth_summary_connected_to_a2dp">Connected to media audio</string>
-    <!-- Bluetooth settings.  The summary string when a device is connected to the headset profile. -->
-    <string name="bluetooth_summary_connected_to_headset">Connected to phone audio</string>
-    <!-- Bluetooth settings.  The summary string when a device is connected to the A2DP and headset profiles. -->
-    <string name="bluetooth_summary_connected_to_a2dp_headset">Connected to phone and media audio</string>
-
-    <!-- Bluetooth settings.  Connection options screen.  The title of the screen. -->
-    <string name="bluetooth_device_advanced_title"><xliff:g id="device_name">%1$s</xliff:g> options</string>
-    <!-- Bluetooth settings.  Connection options screen.  The title of the checkbox that controls whether the device is in "online" mode or "offline" mode.  This essentially is the checkbox that controls whether any checks / unchecks on a profile should be applied immediately, or next time the device is connected. -->
-    <string name="bluetooth_device_advanced_online_mode_title">Connect</string>
-    <!-- Bluetooth settings.  Connection options screen.  The summary of the online mode checkbox.  This describes what the setting does in the context of the screen. -->
-    <string name="bluetooth_device_advanced_online_mode_summary">Connect to Bluetooth device</string>
-    <!-- Bluetooth settings.  Connection options screen.  The title of the header that is above all of the profiles. -->
-    <string name="bluetooth_device_advanced_profile_header_title">Profiles</string>
-    <!-- Bluetooth settings.  Connection options screen.  The summary for the A2DP checkbox preference when A2DP is connected. -->
-    <string name="bluetooth_a2dp_profile_summary_connected">Connected to media audio</string>
-    <!-- Bluetooth settings.  Connection options screen.  The summary for the headset checkbox preference when headset is connected. -->
-    <string name="bluetooth_headset_profile_summary_connected">Connected to phone audio</string>
-
-    <!-- Bluetooth settings.  Connection options screen.  The summary for the A2DP checkbox preference that describes how checking it will set the A2DP profile as preferred. -->
-    <string name="bluetooth_a2dp_profile_summary_use_for">Use for media audio</string>
-    <!-- Bluetooth settings.  Connection options screen.  The summary for the headset checkbox preference that describes how checking it will set the headset profile as preferred. -->
-    <string name="bluetooth_headset_profile_summary_use_for">Use for phone audio</string>
 
     <!-- used in various places to indicate there is one song for a given artist or album -->
     <string name="onesong">1 song</string>
@@ -253,7 +38,7 @@
         <!-- number of albums is not equal to one -->
         <item quantity="other"><xliff:g id="count">%d</xliff:g> albums</item>
     </plurals>
-
+    
     <!--
     This string is used as the format string in a String.format call,
     and 5 additional arguments are available for printing:
@@ -480,7 +265,7 @@
     <string name="working_songs">Songs\u2026</string>
     <!-- Shown in the title bar while the list of playlists is being retrieved in the background -->
     <string name="working_playlists">Playlists\u2026</string>
-
+    
     <!-- Shown in the music picker while loading the music database. -->
     <string name="loading">Loading</string>
     <!-- Menu in music picker to sort the list by track/song name. -->
