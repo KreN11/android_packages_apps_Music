@@ -1145,7 +1145,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
 
                 mProgress.setProgress((int) (1000 * pos / mDuration));
             } else {
-                mCurrentTime.setText("--:--");
+                // Enabling blink counter at the end of playback
+                int vis = mCurrentTime.getVisibility();
+                mCurrentTime.setVisibility(vis == View.INVISIBLE ? View.VISIBLE : View.INVISIBLE);
+                remaining = 500;
                 mProgress.setProgress(1000);
             }
             // return the number of milliseconds until the next full second, so
