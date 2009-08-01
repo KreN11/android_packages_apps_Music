@@ -244,7 +244,11 @@ public class AlbumBrowserActivity extends ListActivity
         mCurrentAlbumName = mAlbumCursor.getString(mAlbumCursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM));
         mCurrentArtistNameForAlbum = mAlbumCursor.getString(
                 mAlbumCursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ARTIST));
-        menu.setHeaderTitle(mCurrentAlbumName);
+        if (mCurrentAlbumName == null || mCurrentAlbumName.equals(MediaFile.UNKNOWN_STRING)) {
+            menu.setHeaderTitle(getString(R.string.unknown_album_name));
+        } else {
+            menu.setHeaderTitle(mCurrentAlbumName);
+        }
     }
 
     @Override
