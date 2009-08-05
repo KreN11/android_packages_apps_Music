@@ -19,6 +19,7 @@ package com.android.music;
 
 import android.app.ListActivity;
 import android.app.SearchManager;
+import android.content.ActivityNotFoundException;
 import android.content.AsyncQueryHandler;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -40,6 +41,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Playlists;
 import android.util.Log;
@@ -63,6 +65,15 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import java.text.Collator;
 import java.util.Arrays;
 
+/** Bluetooth Send related */
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.os.Handler;
+import android.os.Message;
+import com.android.music.bluetooth.BluetoothObexTransfer;
+import com.android.music.bluetooth.BluetoothDevicePicker;
+
 public class TrackBrowserActivity extends ListActivity
         implements View.OnCreateContextMenuListener, MusicUtils.Defs, ServiceConnection
 {
@@ -75,7 +86,7 @@ public class TrackBrowserActivity extends ListActivity
     private static final int SEARCH = CHILD_MENU_BASE + 6;
 
 
-    private static final String LOGTAG = "TrackBrowser";
+    private static final String TAG = "TrackBrowser";
 
     private String[] mCursorCols;
     private String[] mPlaylistMemberCols;
@@ -95,6 +106,14 @@ public class TrackBrowserActivity extends ListActivity
     private String mSortOrder;
     private int mSelectedPosition;
     private long mSelectedId;
+
+    /* For Sending contact over Bluetooth */
+    private BluetoothObexTransfer mBluetoothObexTransfer = null;
+    private static final int SUBACTIVITY_PICK_BT_DEVICE = 1;
+    public static final int MENU_ITEM_SEND_BT = 1;
+
+    private static final int DIALOG_BT_PROGRESS = 1;
+    private static final int DIALOG_BT_PROGRESS_INDETERMINATE = 2;
 
     public TrackBrowserActivity()
     {
@@ -159,12 +178,17 @@ public class TrackBrowserActivity extends ListActivity
             mTrackList.setTextFilterEnabled(true);
         }
         mAdapter = (TrackListAdapter) getLastNonConfigurationInstance();
-        
+
         if (mAdapter != null) {
             mAdapter.setActivity(this);
             setListAdapter(mAdapter);
         }
         MusicUtils.bindToService(this, this);
+
+        /* For Sending Music file over Bluetooth */
+        if (SystemProperties.getBoolean("ro.qualcomm.proprietary_obex", false)) {
+            mBluetoothObexTransfer = new BluetoothObexTransfer(TrackBrowserActivity.this, mTransferProgressCallback);
+        }
     }
 
     public void onServiceConnected(ComponentName name, IBinder service)
@@ -207,7 +231,7 @@ public class TrackBrowserActivity extends ListActivity
             }
         }
     }
-    
+
     public void onServiceDisconnected(ComponentName name) {
         // we can't really function without the service, so don't
         finish();
@@ -219,7 +243,7 @@ public class TrackBrowserActivity extends ListActivity
         mAdapterSent = true;
         return a;
     }
-    
+
     @Override
     public void onDestroy() {
         MusicUtils.unbindFromService(this);
@@ -232,7 +256,11 @@ public class TrackBrowserActivity extends ListActivity
         } catch (IllegalArgumentException ex) {
             // we end up here in case we never registered the listeners
         }
-        
+
+        if(mBluetoothObexTransfer != null) {
+            mBluetoothObexTransfer.onDestroy();
+        }
+
         // if we didn't send the adapter off to another activity, we should
         // close the cursor
         if (!mAdapterSent && (mAdapter != null)) {
@@ -244,7 +272,7 @@ public class TrackBrowserActivity extends ListActivity
         unregisterReceiverSafe(mScanListener);
         super.onDestroy();
     }
-    
+
     /**
      * Unregister a receiver, but eat the exception that is thrown if the
      * receiver was never registered to begin with. This is a little easier
@@ -258,7 +286,7 @@ public class TrackBrowserActivity extends ListActivity
             // ignore
         }
     }
-    
+
     @Override
     public void onResume() {
         super.onResume();
@@ -272,7 +300,7 @@ public class TrackBrowserActivity extends ListActivity
         mReScanHandler.removeCallbacksAndMessages(null);
         super.onPause();
     }
-    
+
     /*
      * This listener gets called when the media scanner starts up or finishes, and
      * when the sd card is unmounted.
@@ -288,7 +316,7 @@ public class TrackBrowserActivity extends ListActivity
             mReScanHandler.sendEmptyMessage(0);
         }
     };
-    
+
     private Handler mReScanHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -298,7 +326,7 @@ public class TrackBrowserActivity extends ListActivity
             // in order to try again.
         }
     };
-    
+
     public void onSaveInstanceState(Bundle outcicle) {
         // need to store the selected item so we don't lose it in case
         // of an orientation switch. Otherwise we could lose it while
@@ -311,18 +339,18 @@ public class TrackBrowserActivity extends ListActivity
         outcicle.putBoolean("editmode", mEditMode);
         super.onSaveInstanceState(outcicle);
     }
-    
+
     public void init(Cursor newCursor) {
 
         mAdapter.changeCursor(newCursor); // also sets mTrackCursor
-        
+
         if (mTrackCursor == null) {
             MusicUtils.displayDatabaseError(this);
             closeContextMenu();
             mReScanHandler.sendEmptyMessageDelayed(0, 1000);
             return;
         }
-        
+
         MusicUtils.hideDatabaseError(this);
         setTitle();
 
@@ -374,7 +402,7 @@ public class TrackBrowserActivity extends ListActivity
                 // first item, and see if it returns the same number
                 // of results as the album query.
                 String where = MediaStore.Audio.Media.ALBUM_ID + "='" + mAlbumId +
-                        "' AND " + MediaStore.Audio.Media.ARTIST_ID + "=" + 
+                        "' AND " + MediaStore.Audio.Media.ARTIST_ID + "=" +
                         mTrackCursor.getLong(mTrackCursor.getColumnIndexOrThrow(
                                 MediaStore.Audio.Media.ARTIST_ID));
                 Cursor cursor = MusicUtils.query(this, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -383,7 +411,7 @@ public class TrackBrowserActivity extends ListActivity
                     if (cursor.getCount() != numresults) {
                         // compilation album
                         fancyName = mTrackCursor.getString(idx);
-                    }    
+                    }
                     cursor.deactivate();
                 }
                 if (fancyName == null || fancyName.equals(MediaFile.UNKNOWN_STRING)) {
@@ -438,7 +466,7 @@ public class TrackBrowserActivity extends ListActivity
             setTitle(R.string.tracks_title);
         }
     }
-    
+
     private TouchInterceptor.DropListener mDropListener =
         new TouchInterceptor.DropListener() {
         public void drop(int from, int to) {
@@ -457,7 +485,7 @@ public class TrackBrowserActivity extends ListActivity
                 String where = MediaStore.Audio.Playlists.Members._ID + "=?";
                 String [] wherearg = new String[1];
                 ContentResolver res = getContentResolver();
-                
+
                 int colidx = mTrackCursor.getColumnIndexOrThrow(
                         MediaStore.Audio.Playlists.Members.PLAY_ORDER);
                 if (from < to) {
@@ -492,7 +520,7 @@ public class TrackBrowserActivity extends ListActivity
             }
         }
     };
-    
+
     private TouchInterceptor.RemoveListener mRemoveListener =
         new TouchInterceptor.RemoveListener() {
         public void remove(int which) {
@@ -528,7 +556,7 @@ public class TrackBrowserActivity extends ListActivity
         v.setVisibility(View.VISIBLE);
         mTrackList.invalidateViews();
     }
-    
+
     private BroadcastReceiver mTrackListListener = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -570,6 +598,12 @@ public class TrackBrowserActivity extends ListActivity
         menu.add(0, USE_AS_RINGTONE, 0, R.string.ringtone_menu);
         menu.add(0, DELETE_ITEM, 0, R.string.delete_item);
         menu.add(0, SEARCH, 0, R.string.search_title);
+
+        if (mBluetoothObexTransfer != null) {
+           if (mBluetoothObexTransfer.isBluetoothEnabled()) {
+              menu.add(0,MENU_ITEM_SEND_BT,0, R.string.menu_send_bt);
+           }
+        }
         AdapterContextMenuInfo mi = (AdapterContextMenuInfo) menuInfoIn;
         mSelectedPosition =  mi.position;
         mTrackCursor.moveToPosition(mSelectedPosition);
@@ -628,7 +662,7 @@ public class TrackBrowserActivity extends ListActivity
                 int [] list = new int[1];
                 list[0] = (int) mSelectedId;
                 Bundle b = new Bundle();
-                String f = getString(R.string.delete_song_desc); 
+                String f = getString(R.string.delete_song_desc);
                 String desc = String.format(f, mCurrentTrackName);
                 b.putString("description", desc);
                 b.putIntArray("items", list);
@@ -638,14 +672,33 @@ public class TrackBrowserActivity extends ListActivity
                 startActivityForResult(intent, -1);
                 return true;
             }
-            
+
             case REMOVE:
                 removePlaylistItem(mSelectedPosition);
                 return true;
-                
+
             case SEARCH:
                 doSearch();
                 return true;
+
+            case MENU_ITEM_SEND_BT: {
+                if (mBluetoothObexTransfer != null) {
+                    if (mBluetoothObexTransfer.isBluetoothEnabled()) {
+                       Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mSelectedId);
+                       Intent intent = new Intent(this, BluetoothDevicePicker.class);
+                       intent.setAction(BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE);
+                       intent.setData(uri);
+                       try {
+                          startActivityForResult(intent, SUBACTIVITY_PICK_BT_DEVICE);
+                       } catch (ActivityNotFoundException e) {
+                          Log.e(TAG, "No Activity for : " + BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE, e);
+                       } catch (java.lang.NullPointerException e) {
+                          Log.e(TAG, "Null Pointer Exception : " + BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE, e);
+                       }
+                    }
+                 }
+                 return true;
+            }
         }
         return super.onContextItemSelected(item);
     }
@@ -653,11 +706,11 @@ public class TrackBrowserActivity extends ListActivity
     void doSearch() {
         CharSequence title = null;
         String query = null;
-        
+
         Intent i = new Intent();
         i.setAction(MediaStore.INTENT_ACTION_MEDIA_SEARCH);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        
+
         title = mCurrentAlbumName;
         query = mCurrentArtistNameForAlbum + " " + mCurrentAlbumName;
         i.putExtra(MediaStore.EXTRA_MEDIA_ARTIST, mCurrentArtistNameForAlbum);
@@ -698,7 +751,7 @@ public class TrackBrowserActivity extends ListActivity
         if (curcount == 0 || curpos < 0) {
             return;
         }
-        
+
         if ("nowplaying".equals(mPlaylist)) {
             // remove track from queue
 
@@ -734,9 +787,9 @@ public class TrackBrowserActivity extends ListActivity
             }
         }
     }
-    
+
     private void moveItem(boolean up) {
-        int curcount = mTrackCursor.getCount(); 
+        int curcount = mTrackCursor.getCount();
         int curpos = mTrackList.getSelectedItemPosition();
         if ( (up && curpos < 1) || (!up  && curpos >= curcount - 1)) {
             return;
@@ -780,7 +833,130 @@ public class TrackBrowserActivity extends ListActivity
             res.update(baseUri, values, where, wherearg);
         }
     }
-    
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+        case DIALOG_BT_PROGRESS:
+        case DIALOG_BT_PROGRESS_INDETERMINATE:
+            return createBluetoothProgressDialog(id);
+        }
+        return null;
+    }
+    /*************************************
+      Bluetooth transfer related UI - Start
+      ************************************ */
+    /** Dialog that displays the progress of the Put/Get */
+    private ProgressDialog mProgressDialog=null;
+    private int mProgressDlgId ;
+    private BluetoothObexTransfer.TransferProgressCallback mTransferProgressCallback = new BluetoothObexTransfer.TransferProgressCallback () {
+
+       public void onStart(boolean showCancelProgress) {
+          if(mBluetoothObexTransfer != null)
+          {
+             if (showCancelProgress) {
+                showDialog(DIALOG_BT_PROGRESS);
+             }
+             else
+             {
+                showDialog(DIALOG_BT_PROGRESS_INDETERMINATE);
+             }
+             if(mProgressHandler != null) {
+                mProgressHandler.sendEmptyMessage(0);
+             }
+          }
+       }
+
+       public void onUpdate() {
+           if(mProgressHandler != null) {
+              mProgressHandler.sendEmptyMessage(0);
+           }
+       }
+
+       public void onComplete() {
+           if(mProgressHandler != null) {
+              mProgressHandler.sendEmptyMessage(0);
+           }
+       }
+    };
+
+    private Handler mProgressHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (mProgressDialog != null) {
+               if(mBluetoothObexTransfer.isTransferinProgress()) {
+                  mProgressDialog.setTitle(mBluetoothObexTransfer.getActiveRemoteOPPServerName());
+                  mProgressDialog.setMessage(mBluetoothObexTransfer.getTransferFileMessage());
+                  if (! mProgressDialog.isIndeterminate()) {
+                     mProgressDialog.setMax((int)mBluetoothObexTransfer.getTotalBytes());
+                     mProgressDialog.setProgress((int)mBluetoothObexTransfer.getDoneBytes());
+                  }
+                  mProgressHandler.sendEmptyMessageDelayed(0, 200);
+               }
+               else
+               {
+                  removeDialog(mProgressDlgId);
+                  mProgressDialog=null;
+               }
+            }
+        }
+    };
+
+    private Dialog createBluetoothProgressDialog(int id) {
+       Dialog dlg = null;
+       if(mBluetoothObexTransfer != null)
+       {
+           mProgressDlgId = id;
+          /* If the transfer completed even before the progress dialog is launched,
+             no need to open the transfer progress
+             */
+          if(mBluetoothObexTransfer.isTransferinProgress()) {
+             mProgressDialog = new ProgressDialog(TrackBrowserActivity.this);
+
+             mProgressDialog.setTitle(mBluetoothObexTransfer.getActiveRemoteOPPServerName());
+             mProgressDialog.setMessage(mBluetoothObexTransfer.getTransferFileMessage());
+             mProgressDialog.setIcon(R.drawable.ic_bluetooth);
+             if(mProgressDlgId == DIALOG_BT_PROGRESS)
+             {
+                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+                mProgressDialog.setMax((int)mBluetoothObexTransfer.getTotalBytes());
+                mProgressDialog.setProgress((int)mBluetoothObexTransfer.getDoneBytes());
+                mProgressDialog.setButton(DialogInterface.BUTTON_POSITIVE,
+                                          getText(R.string.cancel_transfer),
+                    new DialogInterface.OnClickListener() {
+                   @Override
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                      if(mBluetoothObexTransfer != null)
+                      {
+                         mBluetoothObexTransfer.progressCanceled();
+                      }
+                    }
+                }
+                );
+                mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                   @Override
+                   public void onCancel(DialogInterface dialog) {
+                      if(mBluetoothObexTransfer != null)
+                      {
+                         mBluetoothObexTransfer.progressCanceled();
+                      }
+                   }
+                }
+                );
+             }
+             else {
+                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+             }
+          }
+       }
+       return mProgressDialog;
+    }
+    /*************************************
+      Bluetooth transfer related UI - End
+      ************************************ */
+
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id)
     {
@@ -836,11 +1012,11 @@ public class TrackBrowserActivity extends ListActivity
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 return true;
-                
+
             case SHUFFLE_ALL:
                 // Should 'shuffle all' shuffle ALL, or only the tracks shown?
                 cursor = MusicUtils.query(this, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        new String [] { MediaStore.Audio.Media._ID}, 
+                        new String [] { MediaStore.Audio.Media._ID},
                         MediaStore.Audio.Media.IS_MUSIC + "=1", null,
                         MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
                 if (cursor != null) {
@@ -848,13 +1024,13 @@ public class TrackBrowserActivity extends ListActivity
                     cursor.close();
                 }
                 return true;
-                
+
             case SAVE_AS_PLAYLIST:
                 intent = new Intent();
                 intent.setClass(this, CreatePlaylist.class);
                 startActivityForResult(intent, SAVE_AS_PLAYLIST);
                 return true;
-                
+
             case CLEAR_PLAYLIST:
                 // We only clear the current playlist
                 MusicUtils.clearQueue();
@@ -874,7 +1050,7 @@ public class TrackBrowserActivity extends ListActivity
                         getTrackCursor(mAdapter.getQueryHandler(), null);
                 }
                 break;
-                
+
             case NEW_PLAYLIST:
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
@@ -895,15 +1071,28 @@ public class TrackBrowserActivity extends ListActivity
                     }
                 }
                 break;
+
+            case SUBACTIVITY_PICK_BT_DEVICE:
+                if (resultCode == RESULT_OK && intent != null) {
+                   /* Initiate the transfer */
+                   if( mBluetoothObexTransfer != null) {
+                      // Obtain the Uri with Server name and Address
+                      Uri uri = intent.getData();
+                      String devAddress = intent.getStringExtra(BluetoothDevicePicker.ADDRESS);
+                      String devName = intent.getStringExtra(BluetoothDevicePicker.NAME);
+                      mBluetoothObexTransfer.sendMedia(uri, devAddress, this);
+                   }
+                }//if(result Ok)
+                break;
         }
     }
-    
+
     private Cursor getTrackCursor(AsyncQueryHandler async, String filter) {
         Cursor ret = null;
         mSortOrder = MediaStore.Audio.Media.TITLE_KEY;
         StringBuilder where = new StringBuilder();
         where.append(MediaStore.Audio.Media.TITLE + " != ''");
-        
+
         // Add in the filtering constraints
         String [] keywords = null;
         if (filter != null) {
@@ -920,7 +1109,7 @@ public class TrackBrowserActivity extends ListActivity
                 where.append(MediaStore.Audio.Media.TITLE_KEY + " LIKE ?");
             }
         }
-        
+
         if (mGenre != null) {
             mSortOrder = MediaStore.Audio.Genres.Members.DEFAULT_SORT_ORDER;
             if (async != null) {
@@ -1003,7 +1192,7 @@ public class TrackBrowserActivity extends ListActivity
                         mCursorCols, where.toString() , keywords, mSortOrder);
             }
         }
-        
+
         // This special case is for the "nowplaying" cursor, which cannot be handled
         // asynchronously using AsyncQueryHandler, so we do some extra initialization here.
         if (ret != null && async != null) {
@@ -1051,10 +1240,10 @@ public class TrackBrowserActivity extends ListActivity
                 mSize = 0;
                 return;
             }
-            
+
             int size = mCurrentPlaylistCursor.getCount();
             if (size == 0) {
-                Log.w (LOGTAG, "makeNowPlayingCursor query did not succeed because current playlist size is 0");
+                Log.w (TAG, "makeNowPlayingCursor query did not succeed because current playlist size is 0");
                 mCurrentPlaylistCursor = null;
                 mSize = 0;
                 return;
@@ -1069,7 +1258,7 @@ public class TrackBrowserActivity extends ListActivity
             }
             mCurrentPlaylistCursor.moveToFirst();
             mCurPos = -1;
-            
+
             // At this point we can verify the 'now playing' list we got
             // earlier to make sure that all the items in there still exist
             // in the database, and remove those that aren't. This way we
@@ -1108,7 +1297,7 @@ public class TrackBrowserActivity extends ListActivity
         {
             if (oldPosition == newPosition)
                 return true;
-            
+
             if (mNowPlaying == null || mCursorIdxs == null) {
                 return false;
             }
@@ -1116,12 +1305,12 @@ public class TrackBrowserActivity extends ListActivity
             // The cursor doesn't have any duplicates in it, and is not ordered
             // in queue-order, so we need to figure out where in the cursor we
             // should be.
-           
+
             int newid = mNowPlaying[newPosition];
             int crsridx = Arrays.binarySearch(mCursorIdxs, newid);
             mCurrentPlaylistCursor.moveToPosition(crsridx);
             mCurPos = newPosition;
-            
+
             return true;
         }
 
@@ -1142,7 +1331,7 @@ public class TrackBrowserActivity extends ListActivity
             }
             return true;
         }
-        
+
         public void moveItem(int from, int to) {
             try {
                 mService.moveQueueItem(from, to);
@@ -1226,7 +1415,7 @@ public class TrackBrowserActivity extends ListActivity
         {
             return mCols;
         }
-        
+
         @Override
         public void deactivate()
         {
@@ -1249,7 +1438,7 @@ public class TrackBrowserActivity extends ListActivity
         private int mCurPos;
         private IMediaPlaybackService mService;
     }
-    
+
     static class TrackListAdapter extends SimpleCursorAdapter implements SectionIndexer {
         boolean mIsNowPlaying;
         boolean mDisableNowPlayingIndicator;
@@ -1262,14 +1451,14 @@ public class TrackBrowserActivity extends ListActivity
         private final StringBuilder mBuilder = new StringBuilder();
         private final String mUnknownArtist;
         private final String mUnknownAlbum;
-        
+
         private AlphabetIndexer mIndexer;
-        
+
         private TrackBrowserActivity mActivity = null;
         private AsyncQueryHandler mQueryHandler;
         private String mConstraint = null;
         private boolean mConstraintIsValid = false;
-        
+
         static class ViewHolder {
             TextView line1;
             TextView line2;
@@ -1283,14 +1472,14 @@ public class TrackBrowserActivity extends ListActivity
             QueryHandler(ContentResolver res) {
                 super(res);
             }
-            
+
             @Override
             protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
                 //Log.i("@@@", "query complete: " + cursor.getCount() + "   " + mActivity);
                 mActivity.init(cursor);
             }
         }
-        
+
         TrackListAdapter(Context context, TrackBrowserActivity currentactivity,
                 int layout, Cursor cursor, String[] from, int[] to,
                 boolean isnowplaying, boolean disablenowplayingindicator) {
@@ -1301,18 +1490,18 @@ public class TrackBrowserActivity extends ListActivity
             mDisableNowPlayingIndicator = disablenowplayingindicator;
             mUnknownArtist = context.getString(R.string.unknown_artist_name);
             mUnknownAlbum = context.getString(R.string.unknown_album_name);
-            
+
             mQueryHandler = new QueryHandler(context.getContentResolver());
         }
-        
+
         public void setActivity(TrackBrowserActivity newactivity) {
             mActivity = newactivity;
         }
-        
+
         public AsyncQueryHandler getQueryHandler() {
             return mQueryHandler;
         }
-        
+
         private void getColumnIndices(Cursor cursor) {
             if (cursor != null) {
                 mTitleIdx = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
@@ -1324,13 +1513,13 @@ public class TrackBrowserActivity extends ListActivity
                 } catch (IllegalArgumentException ex) {
                     mAudioIdIdx = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
                 }
-                
+
                 if (mIndexer != null) {
                     mIndexer.setCursor(cursor);
                 } else if (!mActivity.mEditMode) {
                     String alpha = mActivity.getString(
                             com.android.internal.R.string.fast_scroll_alphabet);
-                
+
                     mIndexer = new MusicAlphabetIndexer(cursor, mTitleIdx, alpha);
                 }
             }
@@ -1346,7 +1535,7 @@ public class TrackBrowserActivity extends ListActivity
             } else {
                 iv.setVisibility(View.GONE);
             }
-            
+
             ViewHolder vh = new ViewHolder();
             vh.line1 = (TextView) v.findViewById(R.id.line1);
             vh.line2 = (TextView) v.findViewById(R.id.line2);
@@ -1360,19 +1549,19 @@ public class TrackBrowserActivity extends ListActivity
 
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-            
+
             ViewHolder vh = (ViewHolder) view.getTag();
-            
+
             cursor.copyStringToBuffer(mTitleIdx, vh.buffer1);
             vh.line1.setText(vh.buffer1.data, 0, vh.buffer1.sizeCopied);
-            
+
             int secs = cursor.getInt(mDurationIdx) / 1000;
             if (secs == 0) {
                 vh.duration.setText("");
             } else {
                 vh.duration.setText(MusicUtils.makeTimeString(context, secs));
             }
-            
+
             final StringBuilder builder = mBuilder;
             builder.delete(0, builder.length());
 
@@ -1402,7 +1591,7 @@ public class TrackBrowserActivity extends ListActivity
                 } catch (RemoteException ex) {
                 }
             }
-            
+
             // Determining whether and where to show the "now playing indicator
             // is tricky, because we don't actually keep track of where the songs
             // in the current playlist came from after they've started playing.
@@ -1422,7 +1611,7 @@ public class TrackBrowserActivity extends ListActivity
                 iv.setVisibility(View.GONE);
             }
         }
-        
+
         @Override
         public void changeCursor(Cursor cursor) {
             if (cursor != mActivity.mTrackCursor) {
@@ -1431,7 +1620,7 @@ public class TrackBrowserActivity extends ListActivity
                 getColumnIndices(cursor);
             }
         }
-        
+
         @Override
         public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
             String s = constraint.toString();
@@ -1445,25 +1634,25 @@ public class TrackBrowserActivity extends ListActivity
             mConstraintIsValid = true;
             return c;
         }
-        
+
         // SectionIndexer methods
-        
+
         public Object[] getSections() {
-            if (mIndexer != null) { 
+            if (mIndexer != null) {
                 return mIndexer.getSections();
             } else {
                 return null;
             }
         }
-        
+
         public int getPositionForSection(int section) {
             int pos = mIndexer.getPositionForSection(section);
             return pos;
         }
-        
+
         public int getSectionForPosition(int position) {
             return 0;
-        }        
+        }
     }
 }
 

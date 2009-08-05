@@ -2,22 +2,51 @@
 <!--
 /*
 ** Copyright 2007, The Android Open Source Project
+** Copyright (c) 2009, Code Aurora Forum. All rights reserved.
 **
-** Licensed under the Apache License, Version 2.0 (the "License"); 
-** you may not use this file except in compliance with the License. 
-** You may obtain a copy of the License at 
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
 **
-**     http://www.apache.org/licenses/LICENSE-2.0 
+**     http://www.apache.org/licenses/LICENSE-2.0
 **
-** Unless required by applicable law or agreed to in writing, software 
-** distributed under the License is distributed on an "AS IS" BASIS, 
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-** See the License for the specific language governing permissions and 
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
 ** limitations under the License.
 */
 -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Bluetooth related strings  -->
+    <string name="transfer_progress"><xliff:g id="progress_text">%s</xliff:g></string>
+    <string name="transfer_complete">Transfer Completed</string>
+    <string name="cancel_tx_rx_transfer">Bluetooth Send and Receive Canceled</string>
+    <string name="cancel_tx_transfer">Bluetooth Send Canceled</string>
+    <string name="cancel_rx_transfer">Bluetooth Receive Canceled</string>
+    <string name="sending_progress_one">Sending <xliff:g id="send_progress_one_text">%s</xliff:g></string>
+    <string name="sending_progress_more">Sending <xliff:g id="send_progress_more_text">%s</xliff:g> files </string>
+    <string name="get_progress_one">Receiving Business Card </string>
+    <string name="get_progress_more">Receiving <xliff:g id="rx_progress_more_text">%s</xliff:g> Business Cards </string>
+    <string name="receive_contact_done">Received Business Card for Contact : <xliff:g id="receive_sontact_text">%s</xliff:g></string>
+    <string name="opp_sending_failed">Error in sending <xliff:g id="send_failed_text">%s</xliff:g> to <xliff:g id="device_name">%s</xliff:g></string>
+    <string name="opp_get_failed">Error in receiving Contact from <xliff:g id="device_name">%s</xliff:g></string>
+
+    <string name="cancel_transfer">Cancel</string>
+    <string name="menu_share">Share</string>
+
+    <string name="menu_send_bt">Send using Bluetooth</string>
+    <string name="bluetooth_device_picker_title">Select a Device</string>
+     <!--Bluetooth settings screen, text that appears in heading bar when scanning for devices -->
+    <string name="progress_scanning">Scanning</string>
+    <!-- Bluetooth settings screen, menu item to scan for nearby bluetooth devices -->
+    <string name="bluetooth_scan_for_devices">Scan for devices</string>
+    <!-- Title for BT error dialogs. -->
+    <string name="bluetooth_error_title">Attention</string>
+    <!-- Message for the error dialog when BT connecting operation fails generically. -->
+    <string name="bluetooth_connecting_error_message">There was a problem connecting to <xliff:g id="device_name">%1$s</xliff:g>.</string>
 
     <!-- used in various places to indicate there is one song for a given artist or album -->
     <string name="onesong">1 song</string>
@@ -38,7 +67,7 @@
         <!-- number of albums is not equal to one -->
         <item quantity="other"><xliff:g id="count">%d</xliff:g> albums</item>
     </plurals>
-    
+
     <!--
     This string is used as the format string in a String.format call,
     and 5 additional arguments are available for printing:
@@ -265,7 +294,7 @@
     <string name="working_songs">Songs\u2026</string>
     <!-- Shown in the title bar while the list of playlists is being retrieved in the background -->
     <string name="working_playlists">Playlists\u2026</string>
-    
+
     <!-- Shown in the music picker while loading the music database. -->
     <string name="loading">Loading</string>
     <!-- Menu in music picker to sort the list by track/song name. -->
@@ -282,7 +311,7 @@
 
     <!-- Toast after streamStarter activity receives PLAYBACK_COMPLETE in case of an error -->
     <string name="fail_to_start_stream">Failed to play the requested stream.</string>
-    
+
     <!-- The string used to describe Music as a searchable item within system search settings. -->
     <string name="search_settings_description">Artists, albums, and tracks</string>
 </resources>
