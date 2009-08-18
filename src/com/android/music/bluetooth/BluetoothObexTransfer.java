@@ -504,25 +504,22 @@ public class BluetoothObexTransfer {
       }
    }
 
-   /* Invoke createVCardFile will create a vcard file.
+   /* Invoke createVCardFile will create a vCard file.
    *
-   * @param String The Name of the vCard file
+   * @param String The String that contains the VCard contents
    *
    * @return String: notEmpty : If the file was created
    *                EmptyString: If the vCard file was not created
    */
-   public String createVCardFile(String vCardString, String vCardName) {
+   public String createVCardFile(String vCardString) {
       String returnFileName = "";
       String vCardFileName = "";
       FileOutputStream fos = null;
       OutputStreamWriter osw = null;
 
       try {
-         /* openFileOutput creates an Application's private file, is
-          *  this fine?
-          */
-         /* Create a StreamWriter */
-         String filename = (vCardName == "") ? "btopp_"+System.currentTimeMillis()+".vcf" : vCardName+".vcf";
+         /* Always use the same name to avoid creating a bunch of dummy files and avoiding any clean up issues*/
+         String filename = "btopp_vcard.vcf";
          if (useSdCardForVCard == false) {
 
             /*
@@ -609,7 +606,7 @@ public class BluetoothObexTransfer {
             if (vcfName == null) {
                 vcfName = "Unknown";
             }
-            String vcfFile = createVCardFile(vManager.getData(), vcfName);
+            String vcfFile = createVCardFile(vManager.getData());
             if (TextUtils.isEmpty(vcfFile) == false) {
                sendFile(vcfFile, bluetoothDeviceAddress);
                /* Update the Display name to the name of the contact */
@@ -643,7 +640,7 @@ public class BluetoothObexTransfer {
    public void getContact (String bluetoothDeviceAddress) {
       if (isBluetoothEnabled()) {
          String vcfFile = "";
-         vcfFile = createVCardFile("", "");
+         vcfFile = createVCardFile("");
          if (TextUtils.isEmpty(vcfFile) == false) {
             String rxFileName = null;
             String deviceName = bluetoothDeviceAddress;

@@ -18,10 +18,8 @@
 package com.android.music.bluetooth;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.provider.Contacts.People;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
@@ -33,25 +31,15 @@ import android.syncml.pim.vcard.ContactStruct;
 import android.syncml.pim.vcard.VCardComposer;
 import android.syncml.pim.vcard.VCardException;
 import android.syncml.pim.vcard.VCardParser;
+import android.text.TextUtils;
 import android.util.Log;
-import android.os.Environment;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import java.io.File;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.OutputStreamWriter;
-import java.io.FileOutputStream;
-import java.io.Writer;
-import java.io.FileDescriptor;
 
 /**
  * VCardManager to convert vCard2.1 to and from Android Contact
@@ -62,7 +50,9 @@ import java.io.FileDescriptor;
  */
 public class VCardManager {
    static private final String TAG = "VCardManager";
+   static private final String UNKOWN_NAME_STRING = "Unknown";
    static private final boolean V = false;
+   static private final boolean ADD_CONTACT_TO_MYCONTACTSGROUP = true;
 
    /**
     *  Contains the Contact Methods for the contact
@@ -130,9 +120,10 @@ public class VCardManager {
     *
     * @return the Name
     */
-   public String getName() {
-      return(String) mPeople.get(Contacts.People.NAME);
-   }
+    public String getName() {
+        Log.v(TAG, "getName");
+        return(String) mPeople.get(Contacts.People.NAME);
+    }
 
    /**
     * Save content to content provider.
@@ -144,8 +135,12 @@ public class VCardManager {
          /**
           *  Create the Contact in the data base
           */
-         Uri uri = mResolver.insert(Contacts.People.CONTENT_URI, mPeople);
-
+         Uri uri;
+         if (ADD_CONTACT_TO_MYCONTACTSGROUP) {
+             uri = Contacts.People.createPersonInMyContactsGroup(mResolver, mPeople);
+         } else {
+             uri = mResolver.insert(Contacts.People.CONTENT_URI, mPeople);
+         }
          /**
           *  Add the phone list
           */
@@ -177,27 +172,42 @@ public class VCardManager {
     *
     * @return None
     */
-   private void parse(String data) {
-      VCardParser mParser = new VCardParser();
-      VDataBuilder builder = new VDataBuilder();
+    private void parse(String data) {
+        VCardParser parser = new VCardParser();
+        VDataBuilder builder = new VDataBuilder();
 
-      mContactMethodList = new ArrayList<ContentValues>();
-      mPhoneList = new ArrayList<ContentValues>();
-      mOrganizationList = new ArrayList<ContentValues>();
-      mPeople = new ContentValues();
+        mContactMethodList = new ArrayList<ContentValues>();
+        mPhoneList = new ArrayList<ContentValues>();
+        mOrganizationList = new ArrayList<ContentValues>();
+        mPeople = new ContentValues();
 
-      try {
-         mParser.parse(data, builder);
-      } catch (VCardException e) {
-         Log.e(TAG, e.getMessage(), e);
-      } catch (IOException e) {
-         Log.e(TAG, e.getMessage(), e);
-      }
+        if (data != null) {
+            /* Try to parse with the original VCard parser implementation */
+            try {
+                parser.parse(data, builder);
+            } catch (VCardException e) {
+                /* If the VCard parser threw an exception, try to parse all the
+                 * fields that can be parsed and
+                 * ignore the rest, without aborting the parsing.
+                 */
+                LocalVCardParser_V21 parser21 = new LocalVCardParser_V21();
+                try {
+                    parser21.parse(new ByteArrayInputStream(data.getBytes()),
+                            "US-ASCII", builder);
+                } catch (VCardException e1) {
+                    Log.e(TAG, e1.getMessage(), e1);
+                } catch (IOException e1) {
+                    Log.e(TAG, e1.getMessage(), e1);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage(), e);
+            }
 
-      for (VNode vnode : builder.vNodeList) {
-         setContactsValue(vnode);
-      }
-   }
+            for (VNode vnode : builder.vNodeList) {
+                setContactsValue(vnode);
+            }
+        }
+    }
 
    /**
     * Parse each node in the vCard String into local member
@@ -232,7 +242,7 @@ public class VCardManager {
             phoneContent.clear();
             typeList.clear();
 
-                for (String typeStr : prop.paramMap_TYPE) {
+            for (String typeStr : prop.paramMap_TYPE) {
                typeList.add(typeStr.toUpperCase());
             }
             if (typeList.contains("FAX")) {
@@ -248,7 +258,6 @@ public class VCardManager {
                   phoneContent.put(Contacts.Phones.TYPE, phoneContentType);
                   phoneContent.put(Contacts.Phones.NUMBER, prop.propValue);
                   mPhoneList.add(phoneContent);
-                  phoneContent.clear();
                   typeList.remove("FAX");
                }
             }
@@ -433,6 +442,9 @@ public class VCardManager {
       } catch (SQLiteException e) {
          // If conact could not be found return NULL
          //throw (e);
+         if (V) {
+            Log.e(TAG, "loadData - Contact Not found : " + uri.toString());
+         }
       }
       contactStruct.name = null;
       if (contactC != null) {
@@ -448,6 +460,10 @@ public class VCardManager {
          contactC=null;
       }
 
+      if (V) {
+         Log.i(TAG, "loadData - Contact Name : " +  contactStruct.name);
+      }
+
       // get the organizations
       Cursor orgC = null;
       try {
@@ -456,6 +472,9 @@ public class VCardManager {
       } catch (SQLiteException e) {
          //checkSQLiteException(e);
          orgC=null;
+         if (V) {
+            Log.i(TAG, "loadData - organizations Not found : " + uri.toString());
+         }
       }
 
       contactStruct.company = null;
@@ -482,10 +501,13 @@ public class VCardManager {
       } catch (SQLiteException e) {
          //checkSQLiteException(e);
          phoneC=null;
+         if (V) {
+            Log.i(TAG, "loadData - phones Not found : " + uri.toString());
+         }
       }
 
       String data, label;
-      int type, kind;
+      int type, kind, isPrimary;
       if (phoneC != null) {
          if (phoneC.moveToFirst()) {
             do {
@@ -495,8 +517,24 @@ public class VCardManager {
                type = phoneC.getInt(phoneC.getColumnIndexOrThrow(
                                                                 Contacts.Phones.TYPE));
                label = phoneC.getString(phoneC.getColumnIndexOrThrow(
-                                                                 Contacts.Phones.LABEL));
-               contactStruct.addPhone(type, data, label, false);
+                                                                    Contacts.Phones.LABEL));
+               isPrimary = phoneC.getInt(phoneC.getColumnIndexOrThrow(
+                                                                     Contacts.Phones.ISPRIMARY));
+
+               if (isPrimary != 0) {
+                  if (contactStruct.name == null || TextUtils.isEmpty(contactStruct.name)) {
+                      if (data == null || TextUtils.isEmpty(data)) {
+                          contactStruct.name = UNKOWN_NAME_STRING;
+                      } else {
+                          contactStruct.name = data;
+                      }
+                  }
+               }
+               if (V) {
+                  Log.i(TAG, "loadData - addPhone : " + data);
+               }
+               contactStruct.addPhone(type, data, label, isPrimary != 0 ? true :
+                  false);
             } while (phoneC.moveToNext());
          }
          phoneC.close();
@@ -511,6 +549,9 @@ public class VCardManager {
       } catch (SQLiteException e) {
          //checkSQLiteException(e);
          contactMethodC=null;
+         if (V) {
+            Log.i(TAG, "loadData - contact_methods Not found : " + uri.toString());
+         }
       }
 
       if (contactMethodC != null) {
@@ -539,6 +580,11 @@ public class VCardManager {
       // Generate vCard data.
       try {
          VCardComposer composer = new VCardComposer();
+
+         if (contactStruct.name == null || TextUtils.isEmpty(contactStruct.name)) {
+            contactStruct.name = UNKOWN_NAME_STRING;
+         }
+
          return composer.createVCard(contactStruct,
                                      VCardParser.VERSION_VCARD21_INT);
       } catch (VCardException e) {
