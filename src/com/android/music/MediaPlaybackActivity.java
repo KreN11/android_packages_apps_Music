@@ -1450,7 +1450,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 mAlbum.setVisibility(View.VISIBLE);
             }
             mDuration = mService.duration();
-            mTotalTime.setText(MusicUtils.makeTimeString(this, mDuration / 1000));
+            mTotalTime.setText(MusicUtils.makeTimeString(this, (mDuration + 500) / 1000));
         } catch (RemoteException ex) {
             finish();
         }
