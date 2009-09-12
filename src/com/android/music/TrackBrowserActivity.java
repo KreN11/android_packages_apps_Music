@@ -65,14 +65,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import java.text.Collator;
 import java.util.Arrays;
 
-/** Bluetooth Send related */
-import android.app.Dialog;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.os.Handler;
-import android.os.Message;
-import com.android.music.bluetooth.BluetoothObexTransfer;
-import com.android.music.bluetooth.BluetoothDevicePicker;
+/** Bluetooth Send related import */
+import android.bluetooth.BluetoothDevice;
 
 public class TrackBrowserActivity extends ListActivity
         implements View.OnCreateContextMenuListener, MusicUtils.Defs, ServiceConnection
@@ -86,7 +80,7 @@ public class TrackBrowserActivity extends ListActivity
     private static final int SEARCH = CHILD_MENU_BASE + 6;
 
 
-    private static final String TAG = "TrackBrowser";
+    private static final String LOGTAG = "TrackBrowser";
 
     private String[] mCursorCols;
     private String[] mPlaylistMemberCols;
@@ -107,13 +101,20 @@ public class TrackBrowserActivity extends ListActivity
     private int mSelectedPosition;
     private long mSelectedId;
 
-    /* For Sending contact over Bluetooth */
-    private BluetoothObexTransfer mBluetoothObexTransfer = null;
-    private static final int SUBACTIVITY_PICK_BT_DEVICE = 1;
-    public static final int MENU_ITEM_SEND_BT = 1;
+    /**
+     * For sending media file over Bluetooth
+     */
+    private BluetoothDevice mBluetooth = null;
 
-    private static final int DIALOG_BT_PROGRESS = 1;
-    private static final int DIALOG_BT_PROGRESS_INDETERMINATE = 2;
+    public static final int MENU_ITEM_SEND_BT = 1;
+    public static final int MENU_GROUP_BT = 1;
+
+    public static final String PACKAGE_BLUETOOTH_TRANSFER = "com.quicinc.bluetooth";
+    public static final String COMPONENT_BLUETOOTH_TRANSFER = "com.quicinc.bluetooth.BluetoothDevicePicker";
+    public static final String PROFILE = "com.quicinc.bluetooth.intent.PROFILE";
+    public static final String PROFILE_OPP = "com.quicinc.bluetooth.intent.PROFILE.OPP";
+
+    public static final String ACTION_PUSH_FILE = "com.quicinc.bluetooth.ACTION_PUSH_FILE";
 
     public TrackBrowserActivity()
     {
@@ -185,9 +186,9 @@ public class TrackBrowserActivity extends ListActivity
         }
         MusicUtils.bindToService(this, this);
 
-        /* For Sending Music file over Bluetooth */
+        /* For sending media file over Bluetooth */
         if (SystemProperties.getBoolean("ro.qualcomm.proprietary_obex", false)) {
-            mBluetoothObexTransfer = new BluetoothObexTransfer(TrackBrowserActivity.this, mTransferProgressCallback);
+            mBluetooth = (BluetoothDevice) getSystemService(Context.BLUETOOTH_SERVICE);
         }
     }
 
@@ -255,10 +256,6 @@ public class TrackBrowserActivity extends ListActivity
             }
         } catch (IllegalArgumentException ex) {
             // we end up here in case we never registered the listeners
-        }
-
-        if(mBluetoothObexTransfer != null) {
-            mBluetoothObexTransfer.onDestroy();
         }
 
         // if we didn't send the adapter off to another activity, we should
@@ -604,11 +601,15 @@ public class TrackBrowserActivity extends ListActivity
         menu.add(0, DELETE_ITEM, 0, R.string.delete_item);
         menu.add(0, SEARCH, 0, R.string.search_title);
 
-        if (mBluetoothObexTransfer != null) {
-           if (mBluetoothObexTransfer.isBluetoothEnabled()) {
+        /**
+         * Add menu for sending media file over Bluetooth
+         */
+        if (mBluetooth != null) {
+           if (mBluetooth.isEnabled()) {
               menu.add(0,MENU_ITEM_SEND_BT,0, R.string.menu_send_bt);
            }
         }
+
         AdapterContextMenuInfo mi = (AdapterContextMenuInfo) menuInfoIn;
         mSelectedPosition =  mi.position;
         mTrackCursor.moveToPosition(mSelectedPosition);
@@ -687,25 +688,30 @@ public class TrackBrowserActivity extends ListActivity
                 return true;
 
             case MENU_ITEM_SEND_BT: {
-                if (mBluetoothObexTransfer != null) {
-                    if (mBluetoothObexTransfer.isBluetoothEnabled()) {
-                       Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mSelectedId);
-                       Intent intent = new Intent(this, BluetoothDevicePicker.class);
-                       intent.setAction(BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE);
-                       intent.setData(uri);
-                       try {
-                          startActivityForResult(intent, SUBACTIVITY_PICK_BT_DEVICE);
-                       } catch (ActivityNotFoundException e) {
-                          Log.e(TAG, "No Activity for : " + BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE, e);
-                       } catch (java.lang.NullPointerException e) {
-                          Log.e(TAG, "Null Pointer Exception : " + BluetoothDevicePicker.ACTION_SELECT_BLUETOOTH_DEVICE, e);
-                       }
-                    }
-                 }
-                 return true;
+                Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mSelectedId);
+                doBluetoothDeviceTransfer(uri);
+                return true;
             }
         }
         return super.onContextItemSelected(item);
+    }
+
+    private void doBluetoothDeviceTransfer(Uri uri) {
+        if (SystemProperties.getBoolean("ro.qualcomm.proprietary_obex", false)) {
+            if (mBluetooth != null) {
+                if (mBluetooth.isEnabled()) {
+                    Intent intent = new Intent(ACTION_PUSH_FILE);
+                    intent.setData(uri);
+                    intent.putExtra(PROFILE, PROFILE_OPP);
+                    intent.setClassName ("com.quicinc.bluetooth", "com.quicinc.bluetooth.BluetoothDevicePicker");
+                    try {
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        Log.e(LOGTAG, "No Activity for : " + ACTION_PUSH_FILE, e);
+                    }
+                }
+            }
+        }
     }
 
     void doSearch() {
@@ -840,127 +846,6 @@ public class TrackBrowserActivity extends ListActivity
     }
 
     @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-        case DIALOG_BT_PROGRESS:
-        case DIALOG_BT_PROGRESS_INDETERMINATE:
-            return createBluetoothProgressDialog(id);
-        }
-        return null;
-    }
-    /*************************************
-      Bluetooth transfer related UI - Start
-      ************************************ */
-    /** Dialog that displays the progress of the Put/Get */
-    private ProgressDialog mProgressDialog=null;
-    private int mProgressDlgId ;
-    private BluetoothObexTransfer.TransferProgressCallback mTransferProgressCallback = new BluetoothObexTransfer.TransferProgressCallback () {
-
-       public void onStart(boolean showCancelProgress) {
-          if(mBluetoothObexTransfer != null)
-          {
-             if (showCancelProgress) {
-                showDialog(DIALOG_BT_PROGRESS);
-             }
-             else
-             {
-                showDialog(DIALOG_BT_PROGRESS_INDETERMINATE);
-             }
-             if(mProgressHandler != null) {
-                mProgressHandler.sendEmptyMessage(0);
-             }
-          }
-       }
-
-       public void onUpdate() {
-           if(mProgressHandler != null) {
-              mProgressHandler.sendEmptyMessage(0);
-           }
-       }
-
-       public void onComplete() {
-           if(mProgressHandler != null) {
-              mProgressHandler.sendEmptyMessage(0);
-           }
-       }
-    };
-
-    private Handler mProgressHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            if (mProgressDialog != null) {
-               if(mBluetoothObexTransfer.isTransferinProgress()) {
-                  mProgressDialog.setTitle(mBluetoothObexTransfer.getActiveRemoteOPPServerName());
-                  mProgressDialog.setMessage(mBluetoothObexTransfer.getTransferFileMessage());
-                  if (! mProgressDialog.isIndeterminate()) {
-                     mProgressDialog.setMax((int)mBluetoothObexTransfer.getTotalBytes());
-                     mProgressDialog.setProgress((int)mBluetoothObexTransfer.getDoneBytes());
-                  }
-                  mProgressHandler.sendEmptyMessageDelayed(0, 200);
-               }
-               else
-               {
-                  removeDialog(mProgressDlgId);
-                  mProgressDialog=null;
-               }
-            }
-        }
-    };
-
-    private Dialog createBluetoothProgressDialog(int id) {
-       Dialog dlg = null;
-       if(mBluetoothObexTransfer != null)
-       {
-           mProgressDlgId = id;
-          /* If the transfer completed even before the progress dialog is launched,
-             no need to open the transfer progress
-             */
-          if(mBluetoothObexTransfer.isTransferinProgress()) {
-             mProgressDialog = new ProgressDialog(TrackBrowserActivity.this);
-
-             mProgressDialog.setTitle(mBluetoothObexTransfer.getActiveRemoteOPPServerName());
-             mProgressDialog.setMessage(mBluetoothObexTransfer.getTransferFileMessage());
-             mProgressDialog.setIcon(R.drawable.ic_bluetooth);
-             if(mProgressDlgId == DIALOG_BT_PROGRESS)
-             {
-                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-
-                mProgressDialog.setMax((int)mBluetoothObexTransfer.getTotalBytes());
-                mProgressDialog.setProgress((int)mBluetoothObexTransfer.getDoneBytes());
-                mProgressDialog.setButton(DialogInterface.BUTTON_POSITIVE,
-                                          getText(R.string.cancel_transfer),
-                    new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                      if(mBluetoothObexTransfer != null)
-                      {
-                         mBluetoothObexTransfer.progressCanceled();
-                      }
-                    }
-                }
-                );
-                mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                   public void onCancel(DialogInterface dialog) {
-                      if(mBluetoothObexTransfer != null)
-                      {
-                         mBluetoothObexTransfer.progressCanceled();
-                      }
-                   }
-                }
-                );
-             }
-             else {
-                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-             }
-          }
-       }
-       return mProgressDialog;
-    }
-    /*************************************
-      Bluetooth transfer related UI - End
-      ************************************ */
-
-    @Override
     protected void onListItemClick(ListView l, View v, int position, long id)
     {
         if (mTrackCursor.getCount() == 0) {
@@ -1073,19 +958,6 @@ public class TrackBrowserActivity extends ListActivity
                         MusicUtils.addToPlaylist(this, list, plid);
                     }
                 }
-                break;
-
-            case SUBACTIVITY_PICK_BT_DEVICE:
-                if (resultCode == RESULT_OK && intent != null) {
-                   /* Initiate the transfer */
-                   if( mBluetoothObexTransfer != null) {
-                      // Obtain the Uri with Server name and Address
-                      Uri uri = intent.getData();
-                      String devAddress = intent.getStringExtra(BluetoothDevicePicker.ADDRESS);
-                      String devName = intent.getStringExtra(BluetoothDevicePicker.NAME);
-                      mBluetoothObexTransfer.sendMedia(uri, devAddress, this);
-                   }
-                }//if(result Ok)
                 break;
         }
     }
@@ -1246,7 +1118,7 @@ public class TrackBrowserActivity extends ListActivity
 
             int size = mCurrentPlaylistCursor.getCount();
             if (size == 0) {
-                Log.w (TAG, "makeNowPlayingCursor query did not succeed because current playlist size is 0");
+                Log.w (LOGTAG, "makeNowPlayingCursor query did not succeed because current playlist size is 0");
                 mCurrentPlaylistCursor = null;
                 mSize = 0;
                 return;

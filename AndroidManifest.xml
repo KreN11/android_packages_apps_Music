@@ -17,13 +17,13 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.music">
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application android:icon="@drawable/app_music"
@@ -220,10 +220,6 @@
         <activity android:name="DeleteItems" android:theme="@android:style/Theme.Dialog" />
         <activity android:name="ScanningProgress" android:theme="@android:style/Theme.Dialog" />
         <service android:name="MediaPlaybackService" android:exported="true" />
-        <activity android:name=".bluetooth.BluetoothDevicePicker"
-                  android:label="@string/bluetooth_device_picker_title"
-                  android:theme="@android:style/Theme.NoTitleBar">
-        </activity>
 
         <receiver android:name="MediaAppWidgetProvider">
             <intent-filter>
