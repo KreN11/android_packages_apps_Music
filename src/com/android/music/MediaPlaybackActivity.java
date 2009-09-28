@@ -900,6 +900,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         try {
             if(repcnt == 0) {
                 mStartSeekPos = mService.position();
+                // negative means eos has come
+                if (mStartSeekPos < 0) {
+                    mStartSeekPos = mDuration;
+                }
                 mLastSeekEventTime = 0;
                 mSeeking = false;
             } else {
@@ -939,6 +943,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         try {
             if(repcnt == 0) {
                 mStartSeekPos = mService.position();
+                // negative means eos has come
+                if (mStartSeekPos < 0) {
+                    mStartSeekPos = mDuration;
+                }
                 mLastSeekEventTime = 0;
                 mSeeking = false;
             } else {

@@ -1612,6 +1612,9 @@ public class MediaPlaybackService extends Service {
      * @param pos The position to seek to, in milliseconds
      */
     public long seek(long pos) {
+        if (!mPlayer.isInitialized()) {
+            openCurrent();
+        }
         if (mPlayer.isInitialized()) {
             if (pos < 0) pos = 0;
             if (pos > mPlayer.duration()) pos = mPlayer.duration();
