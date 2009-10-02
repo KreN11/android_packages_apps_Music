@@ -1337,8 +1337,10 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 mAlbumArtHandler.obtainMessage(GET_ALBUM_ART, albumid, 0).sendToTarget();
                 mAlbum.setVisibility(View.VISIBLE);
             }
-            mDuration = mService.duration();
-            mTotalTime.setText(MusicUtils.makeTimeString(this, (mDuration + 500) / 1000));
+            if (mService.duration() > 0) {
+                mDuration = mService.duration();
+                mTotalTime.setText(MusicUtils.makeTimeString(this, (mDuration + 500) / 1000));
+            }
         } catch (RemoteException ex) {
             finish();
         }
