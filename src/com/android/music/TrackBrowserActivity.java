@@ -1313,6 +1313,15 @@ public class TrackBrowserActivity extends ListActivity
             return true;
         }
 
+        @Override
+        public void close()
+        {
+            if(mCurrentPlaylistCursor != null) {
+                mCurrentPlaylistCursor.close();
+            }
+            super.close();
+        }
+
         private String [] mCols;
         private Cursor mCurrentPlaylistCursor;     // updated in onMove
         private int mSize;          // size of the queue
