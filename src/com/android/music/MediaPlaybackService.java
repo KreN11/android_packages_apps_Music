@@ -1248,6 +1248,12 @@ public class MediaPlaybackService extends Service {
                         return;
                     } else if (mRepeatMode == REPEAT_ALL || force) {
                         mPlayPos = 0;
+                    } else if ((mRepeatMode == REPEAT_CURRENT) && (mOpenFailedCounter > 0)) {
+                        // If the last clip in the playlist is an unsupported one, skip to the first
+                        // clip in the playlist even if the "repeat current song" option is selected.
+                        // This is the same behaviour as when the unsupported content is not the last
+                        // clip in the playlist.
+                        mPlayPos = 0;
                     }
                 } else {
                     mPlayPos++;
