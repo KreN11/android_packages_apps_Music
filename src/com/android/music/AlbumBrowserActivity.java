@@ -605,7 +605,7 @@ public class AlbumBrowserActivity extends ListActivity
         
         @Override
         public void changeCursor(Cursor cursor) {
-            if (cursor == null || cursor.isClosed()) {
+            if (cursor != null && cursor.isClosed()) {
                 return;
             }
 
