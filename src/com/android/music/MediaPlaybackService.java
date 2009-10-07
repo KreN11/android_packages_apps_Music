@@ -994,8 +994,10 @@ public class MediaPlaybackService extends Service {
         if (mPlayer.isInitialized()) {
             // if we are at the end of the song, go to the next song first
             long duration = mPlayer.duration();
-            if (mRepeatMode != REPEAT_CURRENT && duration > 2000 &&
-                mPlayer.position() >= duration - 2000) {
+            // To resume playback, check whether the remaining duration is more than 500msec or not.
+            // If the remaining playback duration is less than 500msec skip to next song.
+            if (mRepeatMode != REPEAT_CURRENT && duration > 500 &&
+                mPlayer.position() >= duration - 500) {
                 next(true);
             }
 
