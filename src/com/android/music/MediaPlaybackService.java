@@ -388,9 +388,13 @@ public class MediaPlaybackService extends Service {
         //Log.i("@@@@ service", "saved state in " + (System.currentTimeMillis() - start) + " ms");
     }
 
-    private void reloadQueue() {
+    private void reloadQueue () {
+        reloadQueue(true);
+    }
+
+    private void reloadQueue(boolean play_afterload) {
         String q = null;
-        
+
         boolean newstyle = false;
         int id = mCardId;
         if (mPreferences.contains("cardid")) {
@@ -456,6 +460,10 @@ public class MediaPlaybackService extends Service {
             }
             if (c != null) {
                 c.close();
+            }
+
+            if (play_afterload == false) {
+                return;
             }
 
             // Make sure we don't auto-skip to the next song, since that
@@ -620,7 +628,7 @@ public class MediaPlaybackService extends Service {
                     } else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) {
                         mMediaMountedCount++;
                         mCardId = FileUtils.getFatVolumeId(intent.getData().getPath());
-                        reloadQueue();
+                        reloadQueue(false);
                         notifyChange(QUEUE_CHANGED);
                         notifyChange(META_CHANGED);
                     }
