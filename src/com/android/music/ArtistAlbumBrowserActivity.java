@@ -70,6 +70,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
     private String mCurrentArtistNameForAlbum;
     private ArtistAlbumListAdapter mAdapter;
     private boolean mAdapterSent;
+    private boolean mAdapterDestroyed = false;
     private final static int SEARCH = CHILD_MENU_BASE;
 
     public ArtistAlbumBrowserActivity()
@@ -167,6 +168,7 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
         // by clearing its DatasetObservers, which setListAdapter(null) does.
         setListAdapter(null);
         mAdapter = null;
+        mAdapterDestroyed = true;
         unregisterReceiver(mScanListener);
         super.onDestroy();
     }
@@ -216,6 +218,8 @@ public class ArtistAlbumBrowserActivity extends ExpandableListActivity
     
     public void init(Cursor c) {
 
+        if (mAdapterDestroyed)
+            return;
         mAdapter.changeCursor(c); // also sets mArtistCursor
 
         if (mArtistCursor == null) {

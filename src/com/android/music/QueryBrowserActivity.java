@@ -66,6 +66,7 @@ implements MusicUtils.Defs, ServiceConnection
     private final static int REQUERY = 3;
     private QueryListAdapter mAdapter;
     private boolean mAdapterSent;
+    private boolean mAdapterDestroyed = false;
     private String mFilterString = "";
 
     public QueryBrowserActivity()
@@ -186,6 +187,7 @@ implements MusicUtils.Defs, ServiceConnection
         // by clearing its DatasetObservers, which setListAdapter(null) does.
         setListAdapter(null);
         mAdapter = null;
+        mAdapterDestroyed = true;
     }
     
     /*
@@ -225,6 +227,8 @@ implements MusicUtils.Defs, ServiceConnection
     
     public void init(Cursor c) {
         
+        if (mAdapterDestroyed)
+            return;
         mAdapter.changeCursor(c);
 
         if (mQueryCursor == null) {
