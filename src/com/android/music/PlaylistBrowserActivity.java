@@ -70,6 +70,7 @@ public class PlaylistBrowserActivity extends ListActivity
     private static final long PODCASTS_PLAYLIST = -3;
     private PlaylistListAdapter mAdapter;
     boolean mAdapterSent;
+    boolean mAdapterDestroyed = false;
 
     private boolean mCreateShortcut;
 
@@ -184,6 +185,7 @@ public class PlaylistBrowserActivity extends ListActivity
         // by clearing its DatasetObservers, which setListAdapter(null) does.
         setListAdapter(null);
         mAdapter = null;
+        mAdapterDestroyed = true;
         unregisterReceiver(mScanListener);
         super.onDestroy();
     }
@@ -214,6 +216,8 @@ public class PlaylistBrowserActivity extends ListActivity
     };
     public void init(Cursor cursor) {
 
+        if (mAdapterDestroyed)
+            return;
         mAdapter.changeCursor(cursor);
 
         if (mPlaylistCursor == null) {

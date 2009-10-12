@@ -93,6 +93,7 @@ public class TrackBrowserActivity extends ListActivity
     private Cursor mTrackCursor;
     private TrackListAdapter mAdapter;
     private boolean mAdapterSent = false;
+    private boolean mAdapterDestroyed = false;
     private String mAlbumId;
     private String mArtistId;
     private String mPlaylist;
@@ -275,6 +276,7 @@ public class TrackBrowserActivity extends ListActivity
         // by clearing its DatasetObservers, which setListAdapter(null) does.
         setListAdapter(null);
         mAdapter = null;
+        mAdapterDestroyed = true;
         unregisterReceiverSafe(mScanListener);
         super.onDestroy();
     }
@@ -348,6 +350,8 @@ public class TrackBrowserActivity extends ListActivity
 
     public void init(Cursor newCursor) {
 
+        if (mAdapterDestroyed)
+            return;
         mAdapter.changeCursor(newCursor); // also sets mTrackCursor
 
         if (mTrackCursor == null) {
