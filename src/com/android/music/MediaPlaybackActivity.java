@@ -88,6 +88,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private AlbumArtHandler mAlbumArtHandler;
     private Toast mToast;
     private int mTouchSlop;
+    private boolean mSkipSeek = false;
+    private boolean mFirstRefreshEvent = true;
 
     /**
      * For sending media file over Bluetooth
@@ -363,6 +365,9 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
             mFromTouch = true;
         }
         public void onProgressChanged(SeekBar bar, int progress, boolean fromuser) {
+            if (mSkipSeek == true) {
+               return;
+            }
             if (!fromuser || (mService == null)) return;
             long now = SystemClock.elapsedRealtime();
             if ((now - mLastSeekEventTime) > 250) {
@@ -490,6 +495,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         f.addAction(MediaPlaybackService.META_CHANGED);
         f.addAction(MediaPlaybackService.PLAYBACK_COMPLETE);
         f.addAction(MediaPlaybackService.REFRESH_PROGRESSBAR);
+        f.addAction(MediaPlaybackService.TRACK_END);
         registerReceiver(mStatusListener, new IntentFilter(f));
         updateTrackInfo();
         long next = refreshNow();
@@ -1209,6 +1215,12 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         if(mService == null)
             return 500;
         try {
+            if (mFirstRefreshEvent == false) {
+                mSkipSeek = false;
+            }
+            if (mFirstRefreshEvent == true) {
+                mFirstRefreshEvent = false;
+            }
             long pos = mPosOverride < 0 ? mService.position() : mPosOverride;
             long remaining = 1000 - (pos % 1000);
             if ((pos >= 0) && (mDuration > 0)) {
@@ -1295,6 +1307,9 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 setPauseButtonImage();
             } else if (action.equals(MediaPlaybackService.REFRESH_PROGRESSBAR)) {
                 refreshNow();
+            } else if (action.equals(MediaPlaybackService.TRACK_END)) {
+                mFirstRefreshEvent = true;
+                mSkipSeek = true;
             }
         }
     };

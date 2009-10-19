@@ -85,6 +85,7 @@ public class MediaPlaybackService extends Service {
     public static final String PLAYBACK_COMPLETE = "com.android.music.playbackcomplete";
     public static final String ASYNC_OPEN_COMPLETE = "com.android.music.asyncopencomplete";
     public static final String REFRESH_PROGRESSBAR = "com.android.music.refreshui";
+    public static final String TRACK_END = "com.android.music.trackend";
 
     public static final String SERVICECMD = "com.android.music.musicservicecommand";
     public static final String CMDNAME = "command";
@@ -216,6 +217,7 @@ public class MediaPlaybackService extends Service {
                     }
                     break;
                 case TRACK_ENDED:
+                    notifyChange(TRACK_END);
                     if (mRepeatMode == REPEAT_CURRENT) {
                         seek(0);
                         play();
