@@ -1797,6 +1797,11 @@ public class MediaPlaybackService extends Service {
                     mHandler.sendMessageDelayed(mHandler.obtainMessage(SERVER_DIED), 2000);
                     return true;
                 default:
+                    mIsInitialized = false;
+                    mMediaPlayer.release();
+                    mMediaPlayer = new MediaPlayer();
+                    Toast.makeText(MediaPlaybackService.this, R.string.playback_fail, Toast.LENGTH_SHORT).show();
+                    next(false);
                     break;
                 }
                 return false;
