@@ -85,6 +85,7 @@ public class MediaPlaybackService extends Service {
     public static final String PLAYBACK_COMPLETE = "com.android.music.playbackcomplete";
     public static final String ASYNC_OPEN_COMPLETE = "com.android.music.asyncopencomplete";
     public static final String REFRESH_PROGRESSBAR = "com.android.music.refreshui";
+    public static final String TRACK_END = "com.android.music.trackend";
 
     public static final String SERVICECMD = "com.android.music.musicservicecommand";
     public static final String CMDNAME = "command";
@@ -117,6 +118,9 @@ public class MediaPlaybackService extends Service {
     private Vector<Integer> mHistory = new Vector<Integer>(MAX_HISTORY_SIZE);
     private Cursor mCursor;
     private int mPlayPos = -1;
+    private boolean mPlayClip = false;
+    private boolean mSkipPlay = false;
+
     private static final String LOGTAG = "MediaPlaybackService";
     private final Shuffler mRand = new Shuffler();
     private int mOpenFailedCounter = 0;
@@ -216,6 +220,7 @@ public class MediaPlaybackService extends Service {
                     }
                     break;
                 case TRACK_ENDED:
+                    notifyChange(TRACK_END);
                     if (mRepeatMode == REPEAT_CURRENT) {
                         seek(0);
                         play();
@@ -865,23 +870,34 @@ public class MediaPlaybackService extends Service {
             if (mPlayListLen == 0) {
                 return;
             }
-            stop(false);
-
-            String id = String.valueOf(mPlayList[mPlayPos]);
-            
-            mCursor = getContentResolver().query(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    mCursorCols, "_id=" + id , null, null);
-            if (mCursor != null) {
-                mCursor.moveToFirst();
-                open(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI + "/" + id, false);
-                // go to bookmark if needed
-                if (isPodcast()) {
-                    long bookmark = getBookmark();
-                    // Start playing a little bit before the bookmark,
-                    // so it's easier to get back in to the narrative.
-                    seek(bookmark - 5000);
+            boolean retCode = false;
+            while(retCode != true)
+            {
+                stop(false);
+                String id = String.valueOf(mPlayList[mPlayPos]);
+                mCursor = getContentResolver().query(
+                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        mCursorCols, "_id=" + id , null, null);
+                retCode = true;
+                if (mCursor != null) {
+                    mCursor.moveToFirst();
+                    retCode = open(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI + "/" + id, false);
+                    if(retCode == false)
+                        continue;
+                    // go to bookmark if needed
+                    if (isPodcast()) {
+                        long bookmark = getBookmark();
+                        // Start playing a little bit before the bookmark,
+                        // so it's easier to get back in to the narrative.
+                        seek(bookmark - 5000);
+                    }
                 }
+            }
+            if(mPlayClip)
+            {
+                mPlayClip = false;
+                play();
+                notifyChange(META_CHANGED);
             }
         }
     }
@@ -911,10 +927,10 @@ public class MediaPlaybackService extends Service {
      * @param oneshot when set to true, playback will stop after this file completes, instead
      * of moving on to the next track in the list 
      */
-    public void open(String path, boolean oneshot) {
+    public boolean open(String path, boolean oneshot) {
         synchronized (this) {
             if (path == null) {
-                return;
+                return true;
             }
             
             if (oneshot) {
@@ -961,23 +977,31 @@ public class MediaPlaybackService extends Service {
             mFileToPlay = path;
             mPlayer.setDataSource(mFileToPlay);
             mOneShot = oneshot;
+            mSkipPlay = false;
             if (! mPlayer.isInitialized()) {
                 stop(true);
-                if (mOpenFailedCounter++ < 10 &&  mPlayListLen > 1) {
-                    // beware: this ends up being recursive because next() calls open() again.
-                    next(false);
-                }
-                if (! mPlayer.isInitialized() && mOpenFailedCounter != 0) {
-                    // need to make sure we only shows this once
-                    mOpenFailedCounter = 0;
-                    if (!mQuietMode) {
+                mOpenFailedCounter++;
+                // If there is only one clip in the playlist and is invalid content, notify user,
+                // otherwise skip to next clip
+                // need to make sure we only shows this once
+                if ( mPlayListLen == 1 ) {
+                    gotoIdleState();
+                    notifyChange(PLAYBACK_COMPLETE);
+                    mIsSupposedToBePlaying = false;
+                    if(!mQuietMode) {
                         Toast.makeText(this, R.string.playback_failed, Toast.LENGTH_SHORT).show();
                     }
+                } else {
+                    mSkipPlay = true;
+                    next(false);
+                    mSkipPlay = false;
+                    return false;
                 }
             } else {
                 mOpenFailedCounter = 0;
             }
         }
+        return true;
     }
 
     /**
@@ -1271,9 +1295,13 @@ public class MediaPlaybackService extends Service {
             }
             saveBookmarkIfNeeded();
             stop(false);
-            openCurrent();
-            play();
-            notifyChange(META_CHANGED);
+            if(!mSkipPlay)
+            {
+                openCurrent();
+                play();
+                notifyChange(META_CHANGED);
+            }
+            mPlayClip = mSkipPlay;
         }
     }
     
@@ -1769,6 +1797,11 @@ public class MediaPlaybackService extends Service {
                     mHandler.sendMessageDelayed(mHandler.obtainMessage(SERVER_DIED), 2000);
                     return true;
                 default:
+                    mIsInitialized = false;
+                    mMediaPlayer.release();
+                    mMediaPlayer = new MediaPlayer();
+                    Toast.makeText(MediaPlaybackService.this, R.string.playback_fail, Toast.LENGTH_SHORT).show();
+                    next(false);
                     break;
                 }
                 return false;

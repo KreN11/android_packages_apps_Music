@@ -250,6 +250,9 @@
     <!-- Shown as a transient message whenever a file fails to play -->
     <string name="playback_failed">Sorry, the player does not support this type of audio file.</string>
 
+    <!-- Shown as a transient message whenever the player is unable to play a file -->
+    <string name="playback_fail">Sorry, the player cannot play this audio file.</string>
+
     <!-- Text for the "cancel" button in the "delete" and "create playlist" confirmation dialogs -->
     <string name="cancel">Cancel</string>
 
