@@ -84,7 +84,7 @@
     <string name="ringtone_menu_short" msgid="3367622038867238133">"Usar como toque"</string>
     <string name="ringtone_set" msgid="4352073372504803255">"\"%s\" definido como toque do telefone."</string>
     <string name="play_selection" msgid="2854921021814550018">"Reproduzir"</string>
-    <string name="add_to_playlist" msgid="7110273488645072783">"Adicionar à lista de reprodução"</string>
+    <string name="add_to_playlist" msgid="7110273488645072783">"Adicionar à reprodução"</string>
     <string name="queue" msgid="2937629819482787704">"Lista de reprodução atual"</string>
     <string name="new_playlist" msgid="7588112979692632867">"Novo"</string>
     <string name="new_playlist_name_template" msgid="905710296728900597">"Nova lista de reprodução <xliff:g id="NUMBER">%d</xliff:g>"</string>
@@ -136,8 +136,6 @@
     <string name="sort_by_artist" msgid="4607024967813199992">"Artistas"</string>
     <string name="music_picker_title" msgid="1561623486324013570">"Selecione a faixa de música"</string>
     <string name="gadget_track" msgid="3186569295893300114">"Faixa <xliff:g id="TRACK_NUMBER">%d</xliff:g>"</string>
-    <!-- no translation found for fail_to_start_stream (3605390187703912835) -->
-    <skip />
-    <!-- no translation found for search_settings_description (6520975349259883368) -->
-    <skip />
+    <string name="fail_to_start_stream" msgid="3605390187703912835">"Falha ao reproduzir o canal solicitado."</string>
+    <string name="search_settings_description" msgid="6520975349259883368">"Artistas, álbuns e faixas"</string>
 </resources>
