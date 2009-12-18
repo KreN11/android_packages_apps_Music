@@ -1106,9 +1106,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 try {
                     // Assume something is playing when the service says it is,
                     // but also if the audio ID is valid but the service is paused.
-                	Log.d("MusicServiceConnection", "path: " + mService.getPath() + " audioId: " + mService.getAudioId() + " isPlaying: " + mService.isPlaying());
-                	
-                    if (mService.isPlaying() || mService.getPath() != null) {
+                    if (mService.getAudioId() >= 0 || mService.isPlaying() ||
+                            mService.getPath() != null) {
                         // something is playing now, we're done
                         if (mOneShot || mService.getAudioId() < 0) {
                             mRepeatButton.setVisibility(View.INVISIBLE);
