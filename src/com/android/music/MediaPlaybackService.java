@@ -1011,29 +1011,16 @@ public class MediaPlaybackService extends Service {
      * Starts playback of a previously opened file.
      */
     public void play() {
-
-        // If the player is not initialized, pick up the current track and start playback
-        if (!mPlayer.isInitialized())
-        {
-          openCurrent();
-        }
-
         if (mPlayer.isInitialized()) {
             // if we are at the end of the song, go to the next song first
             long duration = mPlayer.duration();
-            // To resume playback, check whether the remaining duration is more than 500msec or not.
-            // If the remaining playback duration is less than 500msec skip to next song.
-            if (mRepeatMode != REPEAT_CURRENT && duration > 500 &&
-                mPlayer.position() >= duration - 500) {
+            if (mRepeatMode != REPEAT_CURRENT && duration > 2000 &&
+                mPlayer.position() >= duration - 2000) {
                 next(true);
             }
 
             mPlayer.start();
-            setForeground(true);
 
-            NotificationManager nm = (NotificationManager)
-            getSystemService(Context.NOTIFICATION_SERVICE);
-    
             RemoteViews views = new RemoteViews(getPackageName(), R.layout.statusbar);
             views.setImageViewResource(R.id.icon, R.drawable.stat_notify_musicplayer);
             if (getAudioId() < 0) {
@@ -1062,11 +1049,12 @@ public class MediaPlaybackService extends Service {
             status.icon = R.drawable.stat_notify_musicplayer;
             status.contentIntent = PendingIntent.getActivity(this, 0,
                     new Intent("com.android.music.PLAYBACK_VIEWER"), 0);
-            nm.notify(PLAYBACKSERVICE_STATUS, status);
+            startForeground(PLAYBACKSERVICE_STATUS, status);
             if (!mIsSupposedToBePlaying) {
+                mIsSupposedToBePlaying = true;
                 notifyChange(PLAYSTATE_CHANGED);
             }
-            mIsSupposedToBePlaying = true;
+
         } else if (mPlayListLen <= 0) {
             // This is mostly so that if you press 'play' on a bluetooth headset
             // without every having played anything before, it will still play
@@ -1086,8 +1074,9 @@ public class MediaPlaybackService extends Service {
         }
         if (remove_status_icon) {
             gotoIdleState();
+        } else {
+            stopForeground(false);
         }
-        setForeground(false);
         if (remove_status_icon) {
             mIsSupposedToBePlaying = false;
         }
@@ -1108,7 +1097,6 @@ public class MediaPlaybackService extends Service {
             if (isPlaying()) {
                 mPlayer.pause();
                 gotoIdleState();
-                setForeground(false);
                 mIsSupposedToBePlaying = false;
                 notifyChange(PLAYSTATE_CHANGED);
                 saveBookmarkIfNeeded();
@@ -1315,6 +1303,7 @@ public class MediaPlaybackService extends Service {
         mDelayedStopHandler.removeCallbacksAndMessages(null);
         Message msg = mDelayedStopHandler.obtainMessage();
         mDelayedStopHandler.sendMessageDelayed(msg, IDLE_DELAY);
+        stopForeground(true);
     }
     
     private void saveBookmarkIfNeeded() {
