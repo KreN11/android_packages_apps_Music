@@ -62,6 +62,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.util.Log;
 
 /** Bluetooth Send related import */
 import android.bluetooth.BluetoothDevice;
@@ -96,8 +97,8 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
      */
     private BluetoothDevice mBluetooth = null;
 
-    public static final int MENU_ITEM_SEND_BT = 1;
-    public static final int MENU_GROUP_BT = 1;
+    public static final int MENU_ITEM_SEND_BT = 14;
+    public static final int MENU_GROUP_BT = 14;
 
     public static final String PACKAGE_BLUETOOTH_TRANSFER = "com.quicinc.bluetooth";
     public static final String COMPONENT_BLUETOOTH_TRANSFER = "com.quicinc.bluetooth.BluetoothDevicePicker";
@@ -588,6 +589,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent intent;
         try {
+        	Log.i("MediaPlaybackActivity", "ITEM SELECTED: " + item.getItemId());
             switch (item.getItemId()) {
                 case GOTO_START:
                     intent = new Intent();
